@@ -19,6 +19,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -44,7 +45,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         Intent fromCaller = getIntent();
 
-        stations = ((Wrapper<ArrayList<StationDTO>>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes))).get();
+        stations = (ArrayList<StationDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
 
         Log.d(TAG, stations.get(0).getLatitude().toString());
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -65,8 +66,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             LatLng latLng = new LatLng(s.getLatitude(), s.getLongitude());
 
             myMarker = googleMap.addMarker(new MarkerOptions()
-                    .position(latLng));
-
+                    .position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+            if(s.getNodeId()>50) {
+                myMarker.setAlpha(0.1f);
+            }
+            myMarker.getPosition();
         }
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(stations.get(0).getLatitude(), stations.get(0).getLongitude()), 8F));
@@ -95,6 +99,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onMapClick(LatLng latLng) {
         Log.d("Map", latLng.toString());
+
     }
 
 }

@@ -3,6 +3,8 @@ package it.unisannio.cityapplication;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -39,18 +41,26 @@ public class MainActivity extends AppCompatActivity {
     private final String baseURI = "http://10.0.2.2:8092/api/stations";
     private final String TAG = "Map";
     private List<StationDTO> stations;
-    public GoogleMap mMap;
-    private SupportMapFragment mapFragment;
-    private UiSettings mUiSettings;
-    private Marker myMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        stations = new ArrayList<>();
+        stations = new ArrayList<StationDTO>();
 
-        new StationsRestTask().execute();
+        new AlertDialog.Builder(this)
+                .setTitle("Title")
+                .setMessage("Do you really want to whatever?")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        new StationsRestTask().execute();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, null).show();
+
+
 
     }
 
@@ -83,10 +93,8 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(Integer res) {
             if(res == 1) {
 
-                Log.d(TAG, stations.get(0).getLatitude().toString());
-
                 Intent intent = new Intent(MainActivity.this, MapActivity.class);
-                intent.putExtra(getResources().getString(R.string.routes), new Wrapper<ArrayList<StationDTO>>((ArrayList<StationDTO>) stations));
+                intent.putExtra(getResources().getString(R.string.routes), (Serializable) stations);
                 startActivity(intent);
 
             }
