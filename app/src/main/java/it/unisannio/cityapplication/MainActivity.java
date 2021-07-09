@@ -34,33 +34,24 @@ import java.lang.reflect.GenericArrayType;
 import java.util.ArrayList;
 import java.util.List;
 
+import it.unisannio.cityapplication.dto.RouteDTO;
 import it.unisannio.cityapplication.dto.StationDTO;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final String baseURI = "http://10.0.2.2:8092/api/stations";
+    private final String baseURI = "http://10.0.2.2:8094/api/routes";
     private final String TAG = "Map";
-    private List<StationDTO> stations;
+    private List<RouteDTO> routes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        stations = new ArrayList<StationDTO>();
-
-        new AlertDialog.Builder(this)
-                .setTitle("Title")
-                .setMessage("Do you really want to whatever?")
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        new StationsRestTask().execute();
-                    }
-                })
-                .setNegativeButton(android.R.string.no, null).show();
+        routes = new ArrayList<RouteDTO>();
 
 
+
+        new StationsRestTask().execute();
 
     }
 
@@ -76,8 +67,8 @@ public class MainActivity extends AppCompatActivity {
             try {
                 gsonResponse = clientResource.get().getText();
                 if(clientResource.getStatus().getCode() == 200) {
-                    stations = gson.fromJson(gsonResponse, new TypeToken<ArrayList<StationDTO>>() {}.getType());
-                    Log.d(TAG, stations.toString());
+                    routes = gson.fromJson(gsonResponse, new TypeToken<ArrayList<RouteDTO>>() {}.getType());
+
                     return 1;
                 } else {
                     return -1;
@@ -94,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
             if(res == 1) {
 
                 Intent intent = new Intent(MainActivity.this, MapActivity.class);
-                intent.putExtra(getResources().getString(R.string.routes), (Serializable) stations);
+                intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                 startActivity(intent);
 
             }

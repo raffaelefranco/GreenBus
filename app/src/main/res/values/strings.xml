@@ -5,4 +5,9 @@
     <string name="login">Login</string>
     <string name="routes">routes</string>
     <string name="login_failed">Login failed</string>
+    <string name="rejected_proposal">Source and destination are incorrect</string>
+    <string name="source_info">Source: </string>
+    <string name="destination_info">Destination: </string>
+    <string name="confirm_title">Do you want confirm the proposal?</string>
+
 </resources>

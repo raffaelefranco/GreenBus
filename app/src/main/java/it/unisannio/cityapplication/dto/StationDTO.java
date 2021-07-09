@@ -1,5 +1,7 @@
 package it.unisannio.cityapplication.dto;
 
+import androidx.annotation.Nullable;
+
 import java.io.Serializable;
 
 public class StationDTO implements Serializable {
@@ -39,6 +41,13 @@ public class StationDTO implements Serializable {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    @Override
+    public boolean equals(Object stationDTO) {
+        return this.getNodeId().equals(((StationDTO) stationDTO).getNodeId())
+                && this.getLongitude().equals(((StationDTO) stationDTO).getLongitude())
+                && this.getLatitude().equals(((StationDTO) stationDTO).getLatitude());
     }
 
 }

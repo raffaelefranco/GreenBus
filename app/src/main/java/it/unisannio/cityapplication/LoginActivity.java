@@ -2,6 +2,7 @@ package it.unisannio.cityapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -33,8 +34,20 @@ public class LoginActivity extends AppCompatActivity {
                 password.getText();
                 // else
                 Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.login_failed), Snackbar.LENGTH_LONG).show();
+
+
+                // put on onPost in AsyncTask
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                startActivity(intent);
+
+
             }
         });
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        //TODO onBack
     }
 }
