@@ -1,0 +1,3 @@
+<resources>
+    <string name="local">localhost:8094</string>
+</resources>

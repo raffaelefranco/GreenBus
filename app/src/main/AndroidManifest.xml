@@ -14,14 +14,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CityApplication"
         android:usesCleartextTraffic="true">
-        <activity android:name=".DriverMapActivity">
+        <activity android:name=".SignInActivity"></activity>
+        <activity android:name=".DriverMapActivity"></activity>
+        <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginActivity"></activity>
-        <activity android:name=".MapActivity" />
+        <activity android:name=".MapActivity"/>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

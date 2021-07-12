@@ -1,7 +1,10 @@
 <resources>
     <string name="app_name">CityApplication</string>
     <string name="username">Username</string>
+    <string name="firstname">First name</string>
+    <string name="lastname">Last name</string>
     <string name="password">Password</string>
+    <string name="sign_in">Sign In</string>
     <string name="login">Login</string>
     <string name="routes">routes</string>
     <string name="login_failed">Login failed</string>
