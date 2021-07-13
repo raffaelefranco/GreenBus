@@ -39,14 +39,15 @@ import it.unisannio.cityapplication.dto.StationDTO;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final String baseURI = R.string.local + "/api/routes";
-    private final String TAG = "Map";
+    private final static String TAG = "Map";
+    private static String baseURI;
     private List<RouteDTO> routes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        baseURI = getString(R.string.local) + "/api/routes";
         routes = new ArrayList<RouteDTO>();
 
         new StationsRestTask().execute();
