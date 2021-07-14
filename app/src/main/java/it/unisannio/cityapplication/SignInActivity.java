@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import it.unisannio.cityapplication.dto.JWTTokenDTO;
+import it.unisannio.cityapplication.dto.SessionDTO;
 import it.unisannio.cityapplication.dto.RegisterDTO;
 import it.unisannio.cityapplication.dto.RouteDTO;
 import it.unisannio.cityapplication.service.CityService;
@@ -93,14 +93,14 @@ public class SignInActivity extends AppCompatActivity {
             registerDTO.setUsername(username);
             registerDTO.setPassword(password);
 
-            Call<JWTTokenDTO> call = registerService.getTokenForSignIn(registerDTO);
-            Response<JWTTokenDTO> response = null;
+            Call<SessionDTO> call = registerService.getTokenForSignIn(registerDTO);
+            Response<SessionDTO> response = null;
             try {
                 response = call.execute();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Response<JWTTokenDTO> finalResponse = response;
+            Response<SessionDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
                     Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_success), Snackbar.LENGTH_LONG).show();

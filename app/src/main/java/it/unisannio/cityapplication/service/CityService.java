@@ -2,7 +2,7 @@ package it.unisannio.cityapplication.service;
 
 import java.util.List;
 
-import it.unisannio.cityapplication.dto.JWTTokenDTO;
+import it.unisannio.cityapplication.dto.SessionDTO;
 import it.unisannio.cityapplication.dto.LoginDTO;
 import it.unisannio.cityapplication.dto.RegisterDTO;
 import it.unisannio.cityapplication.dto.RouteDTO;
@@ -19,10 +19,10 @@ public interface CityService {
     Call<List<RouteDTO>> getRoutes();
 
     @POST("users/login")
-    Call<JWTTokenDTO> getTokenForLogin(@Body LoginDTO loginDTO);
+    Call<SessionDTO> getTokenForLogin(@Body LoginDTO loginDTO);
 
     @POST("users/register")
-    Call<JWTTokenDTO> getTokenForSignIn(@Body RegisterDTO registerDTO);
+    Call<SessionDTO> getTokenForSignIn(@Body RegisterDTO registerDTO);
 
     @GET("tickets")
     Call<TicketDTO> getTicket(@Header("Authorization") String jwt);

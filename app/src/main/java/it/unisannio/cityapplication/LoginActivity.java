@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,9 +23,10 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import it.unisannio.cityapplication.dto.JWTTokenDTO;
+import it.unisannio.cityapplication.dto.SessionDTO;
 import it.unisannio.cityapplication.dto.LoginDTO;
 import it.unisannio.cityapplication.dto.RouteDTO;
+import it.unisannio.cityapplication.dto.internal.Role;
 import it.unisannio.cityapplication.service.CityService;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -34,7 +36,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "Login";
-    public static final String prefName = "CityApplication";
+    private static final String prefName = "CityApplication";
+    private static final String ROLE_PASSENGER = "ROLE_PASSENGER";
+    private static final String ROLE_DRIVER = "ROLE_DRIVER";
     private SharedPreferences preferences;
     private static String baseURI;
     private List<RouteDTO> routes;
@@ -91,22 +95,29 @@ public class LoginActivity extends AppCompatActivity {
                     .build();
 
             CityService cityService = retrofit.create(CityService.class);
-            Call<JWTTokenDTO> call = cityService.getTokenForLogin(new LoginDTO(username, password));
-            Response<JWTTokenDTO> response = null;
+            Call<SessionDTO> call = cityService.getTokenForLogin(new LoginDTO(username, password));
+            Response<SessionDTO> response = null;
 
             try {
                 response = call.execute();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Response<JWTTokenDTO> finalResponse = response;
+            Response<SessionDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
                     SharedPreferences.Editor edit = preferences.edit();
                     edit.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
-                    Intent intent = new Intent(LoginActivity.this, UserMapActivity.class);
-                    intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
-                    startActivity(intent);
+                    if(finalResponse.body().getRoles().contains(ROLE_DRIVER)) {
+                        Intent intent = new Intent(LoginActivity.this, DriverMapActivity.class);
+                        intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
+                        startActivity(intent);
+                    }
+                    else if(finalResponse.body().getRoles().contains(ROLE_PASSENGER)) {
+                       Intent intent = new Intent(LoginActivity.this, UserMapActivity.class);
+                        intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
+                        startActivity(intent);
+                    }
                 } else {
                     Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.login_failed), Snackbar.LENGTH_LONG).show();
                 }

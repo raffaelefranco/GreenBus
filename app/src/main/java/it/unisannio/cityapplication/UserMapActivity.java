@@ -205,15 +205,15 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                                     public void onClick(DialogInterface dialog, int whichButton) {
-                                        source = null;
-                                        destination = null;
-                                        sourceMarker = null;
-                                        destinationMarker = null;
                                         for (Marker m : stationMarkers) {
                                             m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                                             m.setAlpha(1f);
                                         }
-                                        ticketTask();
+                                        ticketTask(source.getNodeId(), destination.getNodeId());
+                                        source = null;
+                                        destination = null;
+                                        sourceMarker = null;
+                                        destinationMarker = null;
                                     }
                                 })
                                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -249,7 +249,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
 
     }
 
-    private void ticketTask() {
+    private void ticketTask(Integer sourceNode, Integer destinationNode) {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -275,14 +275,15 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
             retrofit2.Response<TicketDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
-                    start(finalResponse.body().getOneTimeTicket());
+                    Log.d(TAG, finalResponse.body().getOneTimeTicket());
+                    start(finalResponse.body().getOneTimeTicket(), sourceNode, destinationNode);
                 }
             });
         });
 
     }
 
-    private void start(String ott) {
+    private void start(String ott, Integer sourceNode, Integer destinationNode) {
         Gson gson = new Gson();
         Request request = new Request.Builder().url("ws://10.0.2.2:8080/api/city/notifications?ticket="+ott).build();
 
@@ -302,8 +303,8 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
         };
 
         TripRequestDTO tripRequestDTO = new TripRequestDTO();
-        tripRequestDTO.setOsmidSource(500);
-        tripRequestDTO.setOsmidDestination(30);
+        tripRequestDTO.setOsmidSource(sourceNode);
+        tripRequestDTO.setOsmidDestination(destinationNode);
 
         WebSocket ws = client.newWebSocket(request, listener);
         client.dispatcher().executorService().shutdown();
