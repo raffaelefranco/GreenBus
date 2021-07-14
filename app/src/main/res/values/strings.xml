@@ -17,5 +17,7 @@
     <string name="confirm_title">Do you want confirm the proposal?</string>
     <string name="confirm_exit">Do you want exit?</string>
     <string name="not_registered">Not registered?</string>
+    <string name="request_ok">OK! Your trip was approved.</string>
+    <string name="request_failed">Ops...Your trip wasn\'t approved. Retry...</string>
     <string name="local">http://10.0.2.2:8080</string>
 </resources>

@@ -14,5 +14,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_baseline_directions_car_200" />
+        app:srcCompat="@drawable/logo_city_app" />
 </androidx.constraintlayout.widget.ConstraintLayout>

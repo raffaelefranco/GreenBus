@@ -2,12 +2,8 @@ package it.unisannio.cityapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Dialog;
-import android.app.DialogFragment;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -25,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import it.unisannio.cityapplication.dto.JWTTokenDTO;
-import it.unisannio.cityapplication.dto.LoginDTO;
 import it.unisannio.cityapplication.dto.RegisterDTO;
 import it.unisannio.cityapplication.dto.RouteDTO;
 import it.unisannio.cityapplication.service.CityService;
@@ -125,7 +120,7 @@ public class SignInActivity extends AppCompatActivity {
                             }
                             SharedPreferences.Editor edit = preferences.edit();
                             edit.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
-                            Intent intent = new Intent(SignInActivity.this, MapActivity.class);
+                            Intent intent = new Intent(SignInActivity.this, UserMapActivity.class);
                             intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                             startActivity(intent);
                         }

@@ -3,7 +3,10 @@ package it.unisannio.cityapplication;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,23 +21,41 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import it.unisannio.cityapplication.dto.RouteDTO;
 import it.unisannio.cityapplication.dto.StationDTO;
+import it.unisannio.cityapplication.dto.TicketDTO;
+import it.unisannio.cityapplication.dto.TripNotificationDTO;
+import it.unisannio.cityapplication.dto.TripRequestDTO;
 import it.unisannio.cityapplication.exception.StationException;
+import it.unisannio.cityapplication.service.CityService;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
+import retrofit2.Call;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
+public class UserMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
 
     private final String TAG = "Map";
     private GoogleMap mMap;
     private SupportMapFragment mapFragment;
     private UiSettings mUiSettings;
-
+    public static final String prefName = "CityApplication";
+    private static String baseURI;
+    private SharedPreferences preferences;
     private List<Marker> stationMarkers;
     private Map<String, List<StationDTO>> stationsOnRoutes;
     private List<StationDTO> stations;
@@ -43,6 +64,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private StationDTO destination;
     private Marker sourceMarker;
     private Marker destinationMarker;
+    private OkHttpClient client;
 
     private StationDTO getStationByMarker(Marker marker) {
         for (StationDTO s : stations)
@@ -99,14 +121,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-
+        preferences = getSharedPreferences(prefName, MODE_PRIVATE);
+        baseURI = getString(R.string.local) + "/api/city/";
         Intent fromCaller = getIntent();
         routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
-
+        client = new OkHttpClient();
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         source = null;
         destination = null;
+
 
     }
 
@@ -170,7 +194,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     destination = getStationByMarker(destinationMarker);
 
                     if (checkRoutes(sourceMarker, destinationMarker) && !destination.equals(source)) {
-                        AlertDialog title = new AlertDialog.Builder(MapActivity.this)
+                        AlertDialog title = new AlertDialog.Builder(UserMapActivity.this)
                                 .setTitle(getResources().getString(R.string.confirm_title))
                                 .setMessage(getResources().getString(R.string.source_info)
                                         .concat(source.getNodeId().toString())
@@ -178,13 +202,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                         .concat(getResources().getString(R.string.destination_info))
                                         .concat(destination.getNodeId().toString()))
                                 .setIcon(R.drawable.ic_baseline_directions_car_24)
-                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                                     public void onClick(DialogInterface dialog, int whichButton) {
-                                        // action to sì --> SERVER
+                                        source = null;
+                                        destination = null;
+                                        sourceMarker = null;
+                                        destinationMarker = null;
+                                        for (Marker m : stationMarkers) {
+                                            m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                            m.setAlpha(1f);
+                                        }
+                                        ticketTask();
                                     }
                                 })
-                                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         source = null;
@@ -217,9 +249,72 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     }
 
+    private void ticketTask() {
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            CityService cityService = retrofit.create(CityService.class);
+
+            String typeAuth = "Bearer ";
+            String jwt = preferences.getString("jwt", null);
+
+            Call<TicketDTO> call = cityService.getTicket(typeAuth.concat(jwt));
+
+            retrofit2.Response<TicketDTO> response = null;
+            try {
+                response = call.execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            retrofit2.Response<TicketDTO> finalResponse = response;
+            handler.post(() -> {
+                if (finalResponse.code() == 200) {
+                    start(finalResponse.body().getOneTimeTicket());
+                }
+            });
+        });
+
+    }
+
+    private void start(String ott) {
+        Gson gson = new Gson();
+        Request request = new Request.Builder().url("ws://10.0.2.2:8080/api/city/notifications?ticket="+ott).build();
+
+        WebSocketListener listener = new WebSocketListener() {
+            @Override
+            public void onMessage(WebSocket webSocket, String text) {
+                TripNotificationDTO tripNotificationDTO = null;
+                if(text.contains("tripId"))
+                    tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);
+
+                if(tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED))
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_ok), Snackbar.LENGTH_LONG).show();
+                else if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.REJECTED))
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_failed), Snackbar.LENGTH_LONG).show();
+
+            }
+        };
+
+        TripRequestDTO tripRequestDTO = new TripRequestDTO();
+        tripRequestDTO.setOsmidSource(500);
+        tripRequestDTO.setOsmidDestination(30);
+
+        WebSocket ws = client.newWebSocket(request, listener);
+        client.dispatcher().executorService().shutdown();
+
+        ws.send(gson.toJson(tripRequestDTO, TripRequestDTO.class));
+
+    }
+
     @Override
     public void onBackPressed() {
-        AlertDialog title = new AlertDialog.Builder(MapActivity.this)
+        AlertDialog title = new AlertDialog.Builder(UserMapActivity.this)
                 .setTitle(getResources().getString(R.string.confirm_exit))
                 .setIcon(R.drawable.ic_baseline_directions_car_24)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -239,7 +334,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onMapClick(LatLng latLng) {
-        Log.d("Map", latLng.toString());
+        //Log.d("Map", latLng.toString());
     }
 
 }
