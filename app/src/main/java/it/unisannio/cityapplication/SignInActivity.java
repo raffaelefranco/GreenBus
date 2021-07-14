@@ -8,6 +8,8 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,6 +17,8 @@ import android.widget.EditText;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import it.unisannio.cityapplication.dto.JWTTokenDTO;
 import it.unisannio.cityapplication.dto.LoginDTO;
@@ -56,8 +60,7 @@ public class SignInActivity extends AppCompatActivity {
                 if (firstname.getText().toString().length() != 0 && lastname.getText().toString().length() != 0
                         && email.getText().toString().length() != 0 && username.getText().toString().length() != 0
                         && password.getText().toString().length() != 0)
-                    new SignInTask().execute(firstname.getText().toString(), lastname.getText().toString(), email.getText().toString(),
-                            username.getText().toString(), password.getText().toString());
+                    signInTask(firstname.getText().toString(), lastname.getText().toString(), email.getText().toString(), username.getText().toString(), password.getText().toString());
                 else
                     Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_failed), Snackbar.LENGTH_LONG).show();
             }
@@ -65,21 +68,22 @@ public class SignInActivity extends AppCompatActivity {
 
     }
 
-    public class SignInTask extends AsyncTask<String, Void, Response<JWTTokenDTO>> {
+    private void signInTask(String firstname, String lastname, String email, String username, String password) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
 
-        @Override
-        protected Response<JWTTokenDTO> doInBackground(String... params) {
+        executor.execute(() -> {
             Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
             CityService registerService = retrofit.create(CityService.class);
 
             RegisterDTO registerDTO = new RegisterDTO();
-            registerDTO.setFirstname(params[0]);
-            registerDTO.setLastname(params[1]);
-            registerDTO.setEmail(params[2]);
-            registerDTO.setUsername(params[3]);
-            registerDTO.setPassword(params[4]);
+            registerDTO.setFirstname(firstname);
+            registerDTO.setLastname(lastname);
+            registerDTO.setEmail(email);
+            registerDTO.setUsername(username);
+            registerDTO.setPassword(password);
 
             Call<JWTTokenDTO> call = registerService.getTokenForSignIn(registerDTO);
             Response<JWTTokenDTO> response = null;
@@ -88,44 +92,36 @@ public class SignInActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return response;
-        }
+            Response<JWTTokenDTO> finalResponse = response;
+            handler.post(() -> {
+                if (finalResponse.code() == 200) {
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_success), Snackbar.LENGTH_LONG).show();
 
-        @Override
-        protected void onProgressUpdate(Void... values) {
-        }
-
-        @Override
-        protected void onPostExecute(Response<JWTTokenDTO> response) {
-            if (response.code() == 200) {
-                Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_success), Snackbar.LENGTH_LONG).show();
-
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
+                    Thread thread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
                             try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException interruptedException) {
-                                interruptedException.printStackTrace();
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException interruptedException) {
+                                    interruptedException.printStackTrace();
+                                }
+
+                            } finally {
+                                finish();
                             }
-
-                        } finally {
-                            finish();
+                            Intent intent = new Intent(SignInActivity.this, LoginActivity.class);
+                            startActivity(intent);
                         }
-                        Intent intent = new Intent(SignInActivity.this, LoginActivity.class);
-                        startActivity(intent);
-                    }
 
-                });
-                thread.start();
+                    });
+                    thread.start();
 
-            } else {
-                Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_failed), Snackbar.LENGTH_LONG).show();
-            }
-
-        }
+                } else {
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_failed), Snackbar.LENGTH_LONG).show();
+                }
+            });
+        });
     }
-
 
 }

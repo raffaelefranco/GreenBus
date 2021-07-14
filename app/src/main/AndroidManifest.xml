@@ -14,16 +14,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CityApplication"
         android:usesCleartextTraffic="true">
-        <activity android:name=".SocketActivity"></activity>
-        <activity android:name=".LoginActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+        <activity android:name=".MainActivity"><intent-filter>
+            <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
         </activity>
-        <activity android:name=".SignInActivity" />
-        <activity android:name=".MapActivity" />
+        <activity android:name=".LoginActivity"/>
+        <activity android:name=".SignInActivity"/>
+        <activity android:name=".SocketActivity"/>
+        <activity android:name=".MapActivity"/>
         <activity android:name=".DriverMapActivity" />
 
         <meta-data
@@ -33,7 +33,6 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <activity android:name=".MainActivity" />
     </application>
 
 </manifest>

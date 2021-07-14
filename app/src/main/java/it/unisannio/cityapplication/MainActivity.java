@@ -1,41 +1,27 @@
 package it.unisannio.cityapplication;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
-
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import org.restlet.resource.ClientResource;
-import org.restlet.resource.ResourceException;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 import it.unisannio.cityapplication.dto.RouteDTO;
-import it.unisannio.cityapplication.dto.StationDTO;
+import it.unisannio.cityapplication.service.CityService;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,48 +33,61 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        baseURI = getString(R.string.local) + "/api/routes";
+        baseURI = getString(R.string.local) + "/api/city/";
         routes = new ArrayList<RouteDTO>();
 
-        new StationsRestTask().execute();
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException interruptedException) {
+                        interruptedException.printStackTrace();
+                    }
+
+                } finally {
+                    finish();
+                }
+                stationsTask();
+            }
+
+        });
+        thread.start();
 
     }
 
-    public class StationsRestTask extends AsyncTask<String, Void, Integer> {
+    private void stationsTask() {
 
-        @Override
-        protected Integer doInBackground(String... params) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
 
-            ClientResource clientResource = new ClientResource(baseURI);
-            Gson gson = new Gson();
-            String gsonResponse = null;
+        executor.execute(() -> {
+
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            CityService cityService = retrofit.create(CityService.class);
+            Call<List<RouteDTO>> call = cityService.getRoutes();
+            Response<List<RouteDTO>> response = null;
 
             try {
-                gsonResponse = clientResource.get().getText();
-                if(clientResource.getStatus().getCode() == 200) {
-                    routes = gson.fromJson(gsonResponse, new TypeToken<ArrayList<RouteDTO>>() {}.getType());
+                response = call.execute();
+            } catch (IOException e) {
+                Log.d(TAG, e.getMessage());
+            }
 
-                    return 1;
-                } else {
-                    return -1;
+            Response<List<RouteDTO>> finalResponse = response;
+            handler.post(() -> {
+
+                if(finalResponse.code() == 200) {
+                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                    intent.putExtra(getResources().getString(R.string.routes), (Serializable) finalResponse.body());
+                    startActivity(intent);
+
                 }
 
-            } catch(ResourceException | IOException e) {
-                Log.e(TAG, e.getMessage());
-            }
-            return -1;
-        }
-
-        @Override
-        protected void onPostExecute(Integer res) {
-            if(res == 1) {
-
-                Intent intent = new Intent(MainActivity.this, MapActivity.class);
-                intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
-                startActivity(intent);
-
-            }
-
-        }
+            });
+        });
     }
 }

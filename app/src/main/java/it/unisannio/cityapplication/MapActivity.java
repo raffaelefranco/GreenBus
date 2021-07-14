@@ -102,9 +102,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_map);
 
         Intent fromCaller = getIntent();
-        //routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
+        routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
 
-        routes = new ArrayList<>();
+        /*routes = new ArrayList<>();
         RouteDTO r1 = new RouteDTO();
         r1.setId("Prima");
 
@@ -148,7 +148,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         r2.setStations(l2);
 
         routes.add(r1);
-        routes.add(r2);
+        routes.add(r2);*/
 
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);

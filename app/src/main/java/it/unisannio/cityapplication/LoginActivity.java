@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +26,8 @@ import org.restlet.resource.ClientResource;
 import org.restlet.resource.ResourceException;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import it.unisannio.cityapplication.dto.JWTTokenDTO;
 import it.unisannio.cityapplication.dto.LoginDTO;
@@ -64,7 +68,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (username.getText().toString().length() != 0 && password.getText().toString().length() != 0)
-                    new LoginTask().execute(username.getText().toString(), password.getText().toString());
+                    loginTask(username.getText().toString(), password.getText().toString());
                 else
                     Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.login_failed), Snackbar.LENGTH_LONG).show();
             }
@@ -80,40 +84,40 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    public void onBackPressed() {
+    private void loginTask(String username, String password) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
 
-    }
-
-    public class LoginTask extends AsyncTask<String, Integer, Response<JWTTokenDTO>> {
-
-        @Override
-        protected Response<JWTTokenDTO> doInBackground(String... params) {
+        executor.execute(() -> {
             Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
             CityService cityService = retrofit.create(CityService.class);
-            Call<JWTTokenDTO> call = cityService.getTokenForLogin(new LoginDTO(params[0], params[1]));
+            Call<JWTTokenDTO> call = cityService.getTokenForLogin(new LoginDTO(username, password));
             Response<JWTTokenDTO> response = null;
+
             try {
                 response = call.execute();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return response;
-        }
+            Response<JWTTokenDTO> finalResponse = response;
+            handler.post(() -> {
+                if (finalResponse.code() == 200) {
+                    SharedPreferences.Editor edit = preferences.edit();
+                    edit.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
+                    Intent intent = new Intent(LoginActivity.this, SocketActivity.class);
+                    startActivity(intent);
+                } else {
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.login_failed), Snackbar.LENGTH_LONG).show();
+                }
+            });
+        });
+    }
 
-        @Override
-        protected void onPostExecute(Response<JWTTokenDTO> response) {
-            if (response.code() == 200) {
-                SharedPreferences.Editor edit = preferences.edit();
-                edit.putString("jwt", String.valueOf(response.body().getJwt())).apply();
-                Intent intent = new Intent(LoginActivity.this, SocketActivity.class);
-                startActivity(intent);
-            } else {
-                Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.login_failed), Snackbar.LENGTH_LONG).show();
-            }
-        }
+    @Override
+    public void onBackPressed() {
+
     }
 }
