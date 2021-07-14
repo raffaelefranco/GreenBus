@@ -53,7 +53,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     }
 
-
     private boolean checkCoordinates(LatLng latLng, StationDTO s) {
         return latLng.latitude == s.getLatitude() && latLng.longitude == s.getLongitude();
     }
@@ -103,52 +102,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         Intent fromCaller = getIntent();
         routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
-
-        /*routes = new ArrayList<>();
-        RouteDTO r1 = new RouteDTO();
-        r1.setId("Prima");
-
-        StationDTO s1 = new StationDTO();
-        s1.setNodeId(1);
-        s1.setLatitude(40d);
-        s1.setLongitude(40d);
-        StationDTO s2 = new StationDTO();
-        s2.setNodeId(2);
-        s2.setLatitude(42d);
-        s2.setLongitude(42d);
-        StationDTO s3 = new StationDTO();
-        s3.setNodeId(3);
-        s3.setLatitude(44d);
-        s3.setLongitude(44d);
-        List<StationDTO> l1 = new ArrayList<StationDTO>();
-        l1.add(s1);
-        l1.add(s2);
-        l1.add(s3);
-        r1.setStations(l1);
-
-        RouteDTO r2 = new RouteDTO();
-        r2.setId("Seconda");
-
-        StationDTO s12 = new StationDTO();
-        s12.setNodeId(3);
-        s12.setLatitude(44d);
-        s12.setLongitude(44d);
-        StationDTO s22 = new StationDTO();
-        s22.setNodeId(4);
-        s22.setLatitude(39d);
-        s22.setLongitude(39d);
-        StationDTO s32 = new StationDTO();
-        s32.setNodeId(4);
-        s32.setLatitude(38d);
-        s32.setLongitude(38d);
-        List<StationDTO> l2 = new ArrayList<StationDTO>();
-        l2.add(s12);
-        l2.add(s22);
-        l2.add(s32);
-        r2.setStations(l2);
-
-        routes.add(r1);
-        routes.add(r2);*/
 
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -211,9 +164,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     sourceMarker = marker;
                     source = getStationByMarker(sourceMarker);
 
-                    //Snackbar.make(findViewById(android.R.id.content), source.getNodeId().toString(), Snackbar.LENGTH_LONG).show();
-
-
                 } else if (source != null && destination == null) {
 
                     destinationMarker = marker;
@@ -269,7 +219,22 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     @Override
     public void onBackPressed() {
+        AlertDialog title = new AlertDialog.Builder(MapActivity.this)
+                .setTitle(getResources().getString(R.string.confirm_exit))
+                .setIcon(R.drawable.ic_baseline_directions_car_24)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        android.os.Process.killProcess(android.os.Process.myPid());
+                        System.exit(1);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                }).show();
     }
 
     @Override

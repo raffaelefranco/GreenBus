@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,12 +18,16 @@ import android.widget.EditText;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import it.unisannio.cityapplication.dto.JWTTokenDTO;
 import it.unisannio.cityapplication.dto.LoginDTO;
 import it.unisannio.cityapplication.dto.RegisterDTO;
+import it.unisannio.cityapplication.dto.RouteDTO;
 import it.unisannio.cityapplication.service.CityService;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -32,7 +37,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class SignInActivity extends AppCompatActivity {
 
     private static final String TAG = "SignIn";
+    public static final String prefName = "CityApplication";
     private static String baseURI;
+    private List<RouteDTO> routes;
+    private SharedPreferences preferences;
     private EditText firstname;
     private EditText lastname;
     private EditText email;
@@ -52,7 +60,12 @@ public class SignInActivity extends AppCompatActivity {
         username = (EditText) findViewById(R.id.username);
         password = (EditText) findViewById(R.id.password);
 
+        preferences = getSharedPreferences(prefName, MODE_PRIVATE);
+
         signIn = (Button) findViewById(R.id.sign_in);
+
+        Intent fromCaller = getIntent();
+        routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
 
         signIn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,7 +123,10 @@ public class SignInActivity extends AppCompatActivity {
                             } finally {
                                 finish();
                             }
-                            Intent intent = new Intent(SignInActivity.this, LoginActivity.class);
+                            SharedPreferences.Editor edit = preferences.edit();
+                            edit.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
+                            Intent intent = new Intent(SignInActivity.this, MapActivity.class);
+                            intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                             startActivity(intent);
                         }
 

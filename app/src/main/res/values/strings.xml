@@ -10,11 +10,12 @@
     <string name="routes">routes</string>
     <string name="login_failed">Login failed</string>
     <string name="register_failed">Sign in failed</string>
-    <string name="register_success">Registration successfull! Now let\'s go to login</string>
+    <string name="register_success">Registration successfull! Now let\'s go to map</string>
     <string name="rejected_proposal">Source and destination are incorrect</string>
     <string name="source_info">Source: </string>
     <string name="destination_info">Destination: </string>
     <string name="confirm_title">Do you want confirm the proposal?</string>
+    <string name="confirm_exit">Do you want exit?</string>
     <string name="not_registered">Not registered?</string>
     <string name="local">http://10.0.2.2:8080</string>
 </resources>
