@@ -48,7 +48,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class UserMapActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
 
-    private final String TAG = "Map";
+    private final String TAG = "UserMap";
     private GoogleMap mMap;
     private SupportMapFragment mapFragment;
     private UiSettings mUiSettings;
@@ -274,7 +274,6 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
             retrofit2.Response<TicketDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
-                    Log.d(TAG, finalResponse.body().getOneTimeTicket());
                     start(finalResponse.body().getOneTimeTicket(), sourceNode, destinationNode);
                 }
             });
@@ -289,6 +288,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
         WebSocketListener listener = new WebSocketListener() {
             @Override
             public void onMessage(WebSocket webSocket, String text) {
+                Log.d(TAG, text);
                 TripNotificationDTO tripNotificationDTO = null;
                 if (text.contains("tripId"))
                     tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);

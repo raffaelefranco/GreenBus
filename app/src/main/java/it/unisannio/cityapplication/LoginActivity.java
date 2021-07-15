@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import it.unisannio.cityapplication.dto.SessionDTO;
 import it.unisannio.cityapplication.dto.LoginDTO;
 import it.unisannio.cityapplication.dto.RouteDTO;
+import it.unisannio.cityapplication.dto.TicketDTO;
 import it.unisannio.cityapplication.service.CityService;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -108,9 +109,7 @@ public class LoginActivity extends AppCompatActivity {
                     SharedPreferences.Editor edit = preferences.edit();
                     edit.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
                     if(finalResponse.body().getRoles().contains(ROLE_DRIVER)) {
-                        Intent intent = new Intent(LoginActivity.this, DriverMapActivity.class);
-                        intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
-                        startActivity(intent);
+                        ticketTask();
                     }
                     else if(finalResponse.body().getRoles().contains(ROLE_PASSENGER)) {
                        Intent intent = new Intent(LoginActivity.this, UserMapActivity.class);
@@ -122,6 +121,41 @@ public class LoginActivity extends AppCompatActivity {
                 }
             });
         });
+    }
+
+    private void ticketTask() {
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            CityService cityService = retrofit.create(CityService.class);
+
+            String typeAuth = "Bearer ";
+            String jwt = preferences.getString("jwt", null);
+
+            Call<TicketDTO> call = cityService.getTicket(typeAuth.concat(jwt));
+
+            retrofit2.Response<TicketDTO> response = null;
+            try {
+                response = call.execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            retrofit2.Response<TicketDTO> finalResponse = response;
+            handler.post(() -> {
+                if (finalResponse.code() == 200) {
+                    Intent intent = new Intent(LoginActivity.this, DriverMapActivity.class);
+                    intent.putExtra(getResources().getString(R.string.ticket), (Serializable) finalResponse.body().getOneTimeTicket());
+                    startActivity(intent);
+                }
+            });
+        });
+
     }
 
     @Override

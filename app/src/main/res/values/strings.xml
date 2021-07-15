@@ -8,6 +8,7 @@
     <string name="sign_in">Sign In</string>
     <string name="login">Login</string>
     <string name="routes">routes</string>
+    <string name="ticket">ticket</string>
     <string name="login_failed">Login failed</string>
     <string name="register_failed">Sign in failed</string>
     <string name="register_success">Registration successfull! Now let\'s go to map</string>
