@@ -5,9 +5,12 @@ import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -27,7 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import it.unisannio.cityapplication.dto.RouteDTO;
+import it.unisannio.cityapplication.dto.TripNotificationDTO;
+import it.unisannio.cityapplication.dto.TripRequestDTO;
 import it.unisannio.cityapplication.util.PermissionUtils;
+import okhttp3.Request;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 
 public class DriverMapActivity extends AppCompatActivity
         implements
@@ -39,7 +47,9 @@ public class DriverMapActivity extends AppCompatActivity
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean permissionDenied = false;
     private GoogleMap map;
+    private UiSettings mUiSettings;
     private List<RouteDTO> routes;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +62,41 @@ public class DriverMapActivity extends AppCompatActivity
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
+
     }
+
+    /*private void start(String ott, Integer sourceNode, Integer destinationNode) {
+        Gson gson = new Gson();
+        Request request = new Request.Builder().url("ws://10.0.2.2:8080/api/city/notifications?ticket="+ott).build();
+
+        WebSocketListener listener = new WebSocketListener() {
+            @Override
+            public void onMessage(WebSocket webSocket, String text) {
+                TripNotificationDTO tripNotificationDTO = null;
+                if(text.contains("tripId"))
+                    tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);
+
+                if(tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED))
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_ok), Snackbar.LENGTH_LONG).show();
+                else if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.REJECTED))
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_failed), Snackbar.LENGTH_LONG).show();
+
+            }
+        };
+
+        TripRequestDTO tripRequestDTO = new TripRequestDTO();
+        tripRequestDTO.setOsmidSource(sourceNode);
+        tripRequestDTO.setOsmidDestination(destinationNode);
+
+        WebSocket ws = client.newWebSocket(request, listener);
+        client.dispatcher().executorService().shutdown();
+
+        ws.send(gson.toJson(tripRequestDTO, TripRequestDTO.class));
+
+    }*/
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -70,6 +114,11 @@ public class DriverMapActivity extends AppCompatActivity
                         new LatLng(-33.501, 150.217),
                         new LatLng(-32.306, 149.248),
                         new LatLng(-32.491, 147.309)));*/
+
+        mUiSettings = map.getUiSettings();
+        mUiSettings.setZoomControlsEnabled(true);
+        mUiSettings.setMyLocationButtonEnabled(true);
+        mUiSettings.setMapToolbarEnabled(true);
     }
 
     private void enableMyLocation() {

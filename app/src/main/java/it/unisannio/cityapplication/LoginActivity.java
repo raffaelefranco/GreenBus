@@ -26,7 +26,6 @@ import java.util.concurrent.Executors;
 import it.unisannio.cityapplication.dto.SessionDTO;
 import it.unisannio.cityapplication.dto.LoginDTO;
 import it.unisannio.cityapplication.dto.RouteDTO;
-import it.unisannio.cityapplication.dto.internal.Role;
 import it.unisannio.cityapplication.service.CityService;
 import retrofit2.Call;
 import retrofit2.Response;

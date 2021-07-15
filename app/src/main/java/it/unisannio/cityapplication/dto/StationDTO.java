@@ -1,22 +1,20 @@
 package it.unisannio.cityapplication.dto;
 
-import androidx.annotation.Nullable;
-
 import java.io.Serializable;
+
+import it.unisannio.cityapplication.dto.internal.Coordinate;
 
 public class StationDTO implements Serializable {
 
     private Integer nodeId;
-    private Double latitude;
-    private Double longitude;
+    private Coordinate position;
 
-    public StationDTO() {
-    }
+    public StationDTO() { }
 
-    public StationDTO(Integer nodeId, Double latitude, Double longitude) {
+
+    public StationDTO(Integer nodeId, Coordinate position) {
         this.nodeId = nodeId;
-        this.latitude = latitude;
-        this.longitude = longitude;
+        this.position = position;
     }
 
     public Integer getNodeId() {
@@ -27,27 +25,18 @@ public class StationDTO implements Serializable {
         this.nodeId = nodeId;
     }
 
-    public Double getLatitude() {
-        return latitude;
+    public Coordinate getPosition() {
+        return position;
     }
 
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-
-    public Double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
+    public void setPosition(Coordinate position) {
+        this.position = position;
     }
 
     @Override
     public boolean equals(Object stationDTO) {
         return this.getNodeId().equals(((StationDTO) stationDTO).getNodeId())
-                && this.getLongitude().equals(((StationDTO) stationDTO).getLongitude())
-                && this.getLatitude().equals(((StationDTO) stationDTO).getLatitude());
+                && this.getPosition().getLongitude().equals(((StationDTO) stationDTO).getPosition().getLongitude())
+                && this.getPosition().getLatitude().equals(((StationDTO) stationDTO).getPosition().getLatitude());
     }
-
 }

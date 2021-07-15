@@ -24,7 +24,6 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -76,7 +75,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
     }
 
     private boolean checkCoordinates(LatLng latLng, StationDTO s) {
-        return latLng.latitude == s.getLatitude() && latLng.longitude == s.getLongitude();
+        return latLng.latitude == s.getPosition().getLatitude() && latLng.longitude == s.getPosition().getLongitude();
     }
 
     private List<String> getAssociateRoute(Marker marker) {
@@ -142,8 +141,8 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
         Marker marker = null;
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                new LatLng(routes.get(routes.size() / 2).getStations().get(0).getLatitude(),
-                        routes.get(routes.size() / 2).getStations().get(0).getLongitude()), 9F));
+                new LatLng(routes.get(routes.size() / 2).getStations().get(0).getPosition().getLatitude(),
+                        routes.get(routes.size() / 2).getStations().get(0).getPosition().getLongitude()), 9F));
 
 
         stationMarkers = new ArrayList<Marker>();
@@ -155,7 +154,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
             for (StationDTO s : r.getStations()) {
                 if (!stations.contains(s)) {
                     stations.add(s);
-                    marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getLatitude(), s.getLongitude())));
+                    marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getPosition().getLatitude(), s.getPosition().getLongitude())));
                     //marker.setAlpha(0.6f);
                     stationMarkers.add(marker);
                 }
@@ -285,16 +284,16 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
 
     private void start(String ott, Integer sourceNode, Integer destinationNode) {
         Gson gson = new Gson();
-        Request request = new Request.Builder().url("ws://10.0.2.2:8080/api/city/notifications?ticket="+ott).build();
+        Request request = new Request.Builder().url("ws://10.0.2.2:8080/api/city/notifications?ticket=" + ott).build();
 
         WebSocketListener listener = new WebSocketListener() {
             @Override
             public void onMessage(WebSocket webSocket, String text) {
                 TripNotificationDTO tripNotificationDTO = null;
-                if(text.contains("tripId"))
+                if (text.contains("tripId"))
                     tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);
 
-                if(tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED))
+                if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED))
                     Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_ok), Snackbar.LENGTH_LONG).show();
                 else if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.REJECTED))
                     Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_failed), Snackbar.LENGTH_LONG).show();
