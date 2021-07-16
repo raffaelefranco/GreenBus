@@ -11,6 +11,7 @@ import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -79,11 +80,14 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
     private UiSettings mUiSettings;
     private List<RouteDTO> routes;
     private OkHttpClient client;
-    private Location myLocation;
+    private Location oldLocation;
     private Polyline polyline;
     private String ticket;
     private WebSocket ws = null;
     private NextStationDTO nextStationDTO = null;
+    private List<Marker> stationMarkers;
+    private List<StationDTO> stations;
+    private static boolean isClose;
 
 
     @Override
@@ -96,6 +100,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
 
         Intent fromCaller = getIntent();
         ticket = (String) fromCaller.getSerializableExtra(getResources().getString(R.string.ticket));
+        routes = (List<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
         client = new OkHttpClient();
 
         SupportMapFragment mapFragment =
@@ -103,16 +108,14 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
         mapFragment.getMapAsync(this);
 
         Gson gson = new Gson();
-        Request request = new Request.Builder().url("ws://10.0.2.2:8080/api/city/drivers?ticket=" + ticket + "&licensePlate=FZ215RY").build();
+        Request request = new Request.Builder().url("ws://10.0.2.2:8080/api/city/drivers?ticket=" + ticket + "&licensePlate=FF222OO").build();
 
         WebSocketListener listener = new WebSocketListener() {
             @Override
             public void onMessage(WebSocket webSocket, String text) {
 
-                Log.d(TAG, text);
-
                 nextStationDTO = gson.fromJson(text, NextStationDTO.class);
-                if (nextStationDTO.getMinPath() != null) {
+                    if (nextStationDTO.getMinPath() != null) {
 
                     LatLng latLng = new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude());
 
@@ -122,11 +125,17 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
                         @Override
                         public void run() {
                             map.addMarker(new MarkerOptions().position(latLng));
+                            ArrayList<LatLng> latLngs = new ArrayList<>();
 
                             for (Coordinate coordinate : finalNextStationDTO.getMinPath()) {
-                                map.addPolyline(new PolylineOptions().clickable(true).
-                                        add(new LatLng(coordinate.getLatitude(), coordinate.getLongitude())));
+                                LatLng latLng = new LatLng(coordinate.getLatitude(), coordinate.getLongitude());
+                                latLngs.add(latLng);
                             }
+                            if(polyline != null)
+                                polyline.remove();
+                            polyline = map.addPolyline(new PolylineOptions()
+                                    .clickable(true)
+                                    .add(latLngs.toArray(new LatLng[latLngs.size()])));
                         }
 
                     });
@@ -149,6 +158,21 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
         map.setOnMyLocationChangeListener(this);
         enableMyLocation();
 
+        stationMarkers = new ArrayList<Marker>();
+        stations = new ArrayList<StationDTO>();
+
+        Marker marker = null;
+        for (RouteDTO r : routes) {
+            for (StationDTO s : r.getStations()) {
+                if (!stations.contains(s)) {
+                    stations.add(s);
+                    marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getPosition().getLatitude(), s.getPosition().getLongitude())));
+                    //marker.setAlpha(0.6f);
+                    stationMarkers.add(marker);
+                }
+            }
+        }
+
         mUiSettings = map.getUiSettings();
         mUiSettings.setZoomControlsEnabled(true);
         mUiSettings.setMyLocationButtonEnabled(true);
@@ -157,7 +181,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
     }
 
     private boolean toBeClose(LatLng latLng1, LatLng latLng2) {
-        return distance(latLng1.latitude, latLng1.longitude, latLng2.latitude, latLng2.longitude) < 10000d;
+        return distance(latLng1.latitude, latLng1.longitude, latLng2.latitude, latLng2.longitude) < 300d;
     }
 
     public Double distance(double lat1, double lng1, double lat2, double lng2) {
@@ -171,7 +195,6 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
         double distance = earthRadius * c;
 
         int meterConversion = 1609;
-
         return distance * meterConversion;
     }
 
@@ -245,9 +268,20 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
 
     @Override
     public void onMyLocationChange(@NonNull @NotNull Location location) {
+
+        if(oldLocation != null && !toBeClose(new LatLng(oldLocation.getLatitude(), oldLocation.getLatitude()), new LatLng(location.getLatitude(), location.getLongitude()))) {
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                    new LatLng(location.getLatitude(),
+                            location.getLongitude()), 12F));
+        }
+        oldLocation=location;
+
         Gson gson = new Gson();
-        if(toBeClose(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude()))) {
+        if(!isClose && nextStationDTO != null && toBeClose(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude()))) {
             ws.send(gson.toJson(new NextStationRequestDTO(nextStationDTO.getNextStation())));
+            isClose = true;
+        } else if(!toBeClose(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude()))){
+            isClose = false;
         }
     }
 }

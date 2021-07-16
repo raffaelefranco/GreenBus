@@ -56,8 +56,8 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
     private static String baseURI;
     private SharedPreferences preferences;
     private List<Marker> stationMarkers;
-    private Map<String, List<StationDTO>> stationsOnRoutes;
     private List<StationDTO> stations;
+    private Map<String, List<StationDTO>> stationsOnRoutes;
     private List<RouteDTO> routes;
     private StationDTO source;
     private StationDTO destination;

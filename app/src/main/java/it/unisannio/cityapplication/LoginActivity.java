@@ -150,6 +150,7 @@ public class LoginActivity extends AppCompatActivity {
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
                     Intent intent = new Intent(LoginActivity.this, DriverMapActivity.class);
+                    intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                     intent.putExtra(getResources().getString(R.string.ticket), (Serializable) finalResponse.body().getOneTimeTicket());
                     startActivity(intent);
                 }
