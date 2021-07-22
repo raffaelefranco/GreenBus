@@ -142,7 +142,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                 new LatLng(routes.get(routes.size() / 2).getStations().get(0).getPosition().getLatitude(),
-                        routes.get(routes.size() / 2).getStations().get(0).getPosition().getLongitude()), 9F));
+                        routes.get(routes.size() / 2).getStations().get(0).getPosition().getLongitude()), 11F));
 
 
         stationMarkers = new ArrayList<Marker>();
@@ -155,6 +155,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                 if (!stations.contains(s)) {
                     stations.add(s);
                     marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getPosition().getLatitude(), s.getPosition().getLongitude())));
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
                     //marker.setAlpha(0.6f);
                     stationMarkers.add(marker);
                 }
@@ -179,7 +180,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                 ArrayList<Marker> markersToColor = getMarkersByStations(stationsByRoute);
 
                 for (Marker m : markersToColor)
-                    m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                    m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station_selected));
 
                 marker.setAlpha(0.3f);
 
@@ -196,16 +197,18 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                         AlertDialog title = new AlertDialog.Builder(UserMapActivity.this)
                                 .setTitle(getResources().getString(R.string.confirm_title))
                                 .setMessage(getResources().getString(R.string.source_info)
+                                        .concat(" Station ")
                                         .concat(source.getNodeId().toString())
                                         .concat("\n")
                                         .concat(getResources().getString(R.string.destination_info))
+                                        .concat(" Station ")
                                         .concat(destination.getNodeId().toString()))
-                                .setIcon(R.drawable.ic_baseline_directions_car_24)
+                                .setIcon(R.drawable._minibus)
                                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                                     public void onClick(DialogInterface dialog, int whichButton) {
                                         for (Marker m : stationMarkers) {
-                                            m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
                                             m.setAlpha(1f);
                                         }
                                         ticketTask(source.getNodeId(), destination.getNodeId());
@@ -223,7 +226,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                                         sourceMarker = null;
                                         destinationMarker = null;
                                         for (Marker m : stationMarkers) {
-                                            m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
                                             m.setAlpha(1f);
                                         }
                                     }
@@ -235,7 +238,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                         sourceMarker = null;
                         destinationMarker = null;
                         for (Marker m : stationMarkers) {
-                            m.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
                             m.setAlpha(1f);
                         }
                     }
@@ -288,16 +291,19 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
         WebSocketListener listener = new WebSocketListener() {
             @Override
             public void onMessage(WebSocket webSocket, String text) {
-                Log.d(TAG, text);
-                TripNotificationDTO tripNotificationDTO = null;
-                if (text.contains("tripId"))
-                    tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);
 
-                if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED))
+                if(text.contains("status"))
                     Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_ok), Snackbar.LENGTH_LONG).show();
-                else if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.REJECTED))
-                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_failed), Snackbar.LENGTH_LONG).show();
 
+                TripNotificationDTO tripNotificationDTO = null;
+                if(text.contains("tripId")) {
+                    tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);
+                    if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED))
+                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_go, tripNotificationDTO.getVehicleLicensePlate(), tripNotificationDTO.getPickUpNodeId()), Snackbar.LENGTH_LONG).show();
+
+                    else if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.REJECTED))
+                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_failed), Snackbar.LENGTH_LONG).show();
+                }
             }
         };
 
@@ -316,7 +322,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
     public void onBackPressed() {
         AlertDialog title = new AlertDialog.Builder(UserMapActivity.this)
                 .setTitle(getResources().getString(R.string.confirm_exit))
-                .setIcon(R.drawable.ic_baseline_directions_car_24)
+                .setIcon(R.drawable._minibus)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {

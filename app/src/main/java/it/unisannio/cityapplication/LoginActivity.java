@@ -163,7 +163,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onBackPressed() {
         AlertDialog title = new AlertDialog.Builder(LoginActivity.this)
                 .setTitle(getResources().getString(R.string.confirm_exit))
-                .setIcon(R.drawable.ic_baseline_directions_car_24)
+                .setIcon(R.drawable._minibus)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {

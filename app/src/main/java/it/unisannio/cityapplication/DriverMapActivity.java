@@ -117,14 +117,12 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
                 nextStationDTO = gson.fromJson(text, NextStationDTO.class);
                     if (nextStationDTO.getMinPath() != null) {
 
-                    LatLng latLng = new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude());
 
                     Handler mainHandler = new Handler(getMainLooper());
                     NextStationDTO finalNextStationDTO = nextStationDTO;
                     mainHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            map.addMarker(new MarkerOptions().position(latLng));
                             ArrayList<LatLng> latLngs = new ArrayList<>();
 
                             for (Coordinate coordinate : finalNextStationDTO.getMinPath()) {
@@ -134,6 +132,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
                             if(polyline != null)
                                 polyline.remove();
                             polyline = map.addPolyline(new PolylineOptions()
+                                    .color(R.color.purple_500)
                                     .clickable(true)
                                     .add(latLngs.toArray(new LatLng[latLngs.size()])));
                         }
@@ -161,12 +160,18 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
         stationMarkers = new ArrayList<Marker>();
         stations = new ArrayList<StationDTO>();
 
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                new LatLng(routes.get(routes.size() / 2).getStations().get(0).getPosition().getLatitude(),
+                        routes.get(routes.size() / 2).getStations().get(0).getPosition().getLongitude()), 11F));
+
+
         Marker marker = null;
         for (RouteDTO r : routes) {
             for (StationDTO s : r.getStations()) {
                 if (!stations.contains(s)) {
                     stations.add(s);
                     marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getPosition().getLatitude(), s.getPosition().getLongitude())));
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
                     //marker.setAlpha(0.6f);
                     stationMarkers.add(marker);
                 }
@@ -250,7 +255,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
     public void onBackPressed() {
         AlertDialog title = new AlertDialog.Builder(DriverMapActivity.this)
                 .setTitle(getResources().getString(R.string.confirm_exit))
-                .setIcon(R.drawable.ic_baseline_directions_car_24)
+                .setIcon(R.drawable._minibus)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {
@@ -269,12 +274,12 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
     @Override
     public void onMyLocationChange(@NonNull @NotNull Location location) {
 
-        if(oldLocation != null && !toBeClose(new LatLng(oldLocation.getLatitude(), oldLocation.getLatitude()), new LatLng(location.getLatitude(), location.getLongitude()))) {
+        /*if(oldLocation != null && !toBeClose(new LatLng(oldLocation.getLatitude(), oldLocation.getLatitude()), new LatLng(location.getLatitude(), location.getLongitude()))) {
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(
                     new LatLng(location.getLatitude(),
                             location.getLongitude()), 12F));
         }
-        oldLocation=location;
+        oldLocation=location;*/
 
         Gson gson = new Gson();
         if(!isClose && nextStationDTO != null && toBeClose(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude()))) {
