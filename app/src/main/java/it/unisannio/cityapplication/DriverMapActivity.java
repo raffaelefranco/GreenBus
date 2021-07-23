@@ -1,6 +1,5 @@
 package it.unisannio.cityapplication;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
@@ -9,26 +8,20 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -37,36 +30,23 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import it.unisannio.cityapplication.dto.NextStationDTO;
 import it.unisannio.cityapplication.dto.NextStationRequestDTO;
 import it.unisannio.cityapplication.dto.RouteDTO;
 import it.unisannio.cityapplication.dto.StationDTO;
-import it.unisannio.cityapplication.dto.TicketDTO;
-import it.unisannio.cityapplication.dto.TripNotificationDTO;
-import it.unisannio.cityapplication.dto.TripRequestDTO;
 import it.unisannio.cityapplication.dto.internal.Coordinate;
-import it.unisannio.cityapplication.service.CityService;
 import it.unisannio.cityapplication.util.PermissionUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import retrofit2.Call;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DriverMapActivity extends AppCompatActivity implements GoogleMap.OnMyLocationChangeListener, OnMyLocationButtonClickListener, OnMyLocationClickListener, OnMapReadyCallback, ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -114,6 +94,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
             @Override
             public void onMessage(WebSocket webSocket, String text) {
 
+                Log.d(TAG, text);
                 nextStationDTO = gson.fromJson(text, NextStationDTO.class);
                     if (nextStationDTO.getMinPath() != null) {
 
@@ -171,7 +152,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
                 if (!stations.contains(s)) {
                     stations.add(s);
                     marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getPosition().getLatitude(), s.getPosition().getLongitude())));
-                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station_selected));
                     //marker.setAlpha(0.6f);
                     stationMarkers.add(marker);
                 }

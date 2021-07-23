@@ -6,6 +6,21 @@
     android:layout_height="match_parent"
     tools:context=".SignInActivity">
 
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:ems="14"
+        android:text="@string/join_us"
+        android:textSize="30dp"
+        android:textColor="@color/purple_500"
+        app:layout_constraintBottom_toTopOf="@+id/firstname"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.495"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.767" />
+
     <EditText
         android:id="@+id/firstname"
         android:layout_width="300dp"
@@ -95,18 +110,5 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.748" />
 
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="300dp"
-        android:layout_height="50dp"
-        android:ems="14"
-        android:text="@string/join_us"
-        android:textSize="30dp"
-        android:textColor="#2099f5"
-        app:layout_constraintBottom_toTopOf="@+id/firstname"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.495"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.767" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
