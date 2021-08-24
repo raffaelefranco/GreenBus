@@ -1,4 +1,5 @@
-package it.unisannio.cityapplication.util;
+package it.unisannio.greenbusapplication.util;
+
 import android.app.Activity;
 import android.content.pm.PackageManager;
 
@@ -22,7 +23,6 @@ public class PermissionUtils {
                 permissionsNeeded.add(s);
             }
         }
-
         if (granted) {
             return true;
         } else {
@@ -32,7 +32,6 @@ public class PermissionUtils {
             return false;
         }
     }
-
 
     public static boolean isPermissionGranted(
             int requestCode, int permissionCode, int[] grantResults) {

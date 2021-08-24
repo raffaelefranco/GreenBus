@@ -1,19 +1,19 @@
-package it.unisannio.cityapplication.service;
+package it.unisannio.greenbusapplication.service;
 
 import java.util.List;
 
-import it.unisannio.cityapplication.dto.SessionDTO;
-import it.unisannio.cityapplication.dto.LoginDTO;
-import it.unisannio.cityapplication.dto.RegisterDTO;
-import it.unisannio.cityapplication.dto.RouteDTO;
-import it.unisannio.cityapplication.dto.TicketDTO;
+import it.unisannio.greenbusapplication.dto.SessionDTO;
+import it.unisannio.greenbusapplication.dto.LoginDTO;
+import it.unisannio.greenbusapplication.dto.RegisterDTO;
+import it.unisannio.greenbusapplication.dto.RouteDTO;
+import it.unisannio.greenbusapplication.dto.TicketDTO;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
 
-public interface CityService {
+public interface GreenBusService {
 
     @GET("routes")
     Call<List<RouteDTO>> getRoutes();

@@ -1,4 +1,4 @@
-package it.unisannio.cityapplication;
+package it.unisannio.greenbusapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,10 +20,11 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import it.unisannio.cityapplication.dto.SessionDTO;
-import it.unisannio.cityapplication.dto.RegisterDTO;
-import it.unisannio.cityapplication.dto.RouteDTO;
-import it.unisannio.cityapplication.service.CityService;
+import it.unisannio.greenbusapplication.dto.SessionDTO;
+import it.unisannio.greenbusapplication.dto.RegisterDTO;
+import it.unisannio.greenbusapplication.dto.RouteDTO;
+import it.unisannio.greenbusapplication.service.GreenBusService;
+import it.unisannio.greenbusapplication.util.ConstantValues;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -33,7 +34,7 @@ public class SignInActivity extends AppCompatActivity {
 
     private static final String TAG = "SignIn";
     public static final String prefName = "CityApplication";
-    private static String baseURI;
+    private static String baseUrl;
     private List<RouteDTO> routes;
     private SharedPreferences preferences;
     private EditText firstname;
@@ -47,7 +48,7 @@ public class SignInActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
-        baseURI = getString(R.string.local) + "/api/city/";
+        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
 
         firstname = (EditText) findViewById(R.id.firstname);
         lastname = (EditText) findViewById(R.id.lastname);
@@ -70,7 +71,7 @@ public class SignInActivity extends AppCompatActivity {
                         && password.getText().toString().length() != 0)
                     signInTask(firstname.getText().toString(), lastname.getText().toString(), email.getText().toString(), username.getText().toString(), password.getText().toString());
                 else
-                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_failed), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.sign_in_failed), Snackbar.LENGTH_LONG).show();
             }
         });
 
@@ -81,10 +82,10 @@ public class SignInActivity extends AppCompatActivity {
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
-            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
-            CityService registerService = retrofit.create(CityService.class);
+            GreenBusService registerService = retrofit.create(GreenBusService.class);
 
             RegisterDTO registerDTO = new RegisterDTO();
             registerDTO.setFirstname(firstname);
@@ -103,7 +104,7 @@ public class SignInActivity extends AppCompatActivity {
             Response<SessionDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
-                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_success), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.registration_successful), Snackbar.LENGTH_LONG).show();
 
                     Thread thread = new Thread(new Runnable() {
                         @Override
@@ -129,7 +130,7 @@ public class SignInActivity extends AppCompatActivity {
                     thread.start();
 
                 } else {
-                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.register_failed), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.sign_in_failed), Snackbar.LENGTH_LONG).show();
                 }
             });
         });

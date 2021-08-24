@@ -1,8 +1,8 @@
-package it.unisannio.cityapplication.dto;
+package it.unisannio.greenbusapplication.dto;
 
 import java.io.Serializable;
 
-import it.unisannio.cityapplication.dto.internal.Coordinate;
+import it.unisannio.greenbusapplication.dto.internal.Coordinate;
 
 public class StationDTO implements Serializable {
 

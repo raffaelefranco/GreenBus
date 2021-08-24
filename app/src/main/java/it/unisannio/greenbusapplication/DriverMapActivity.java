@@ -1,4 +1,4 @@
-package it.unisannio.cityapplication;
+package it.unisannio.greenbusapplication;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -37,12 +37,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import it.unisannio.cityapplication.dto.NextStationDTO;
-import it.unisannio.cityapplication.dto.NextStationRequestDTO;
-import it.unisannio.cityapplication.dto.RouteDTO;
-import it.unisannio.cityapplication.dto.StationDTO;
-import it.unisannio.cityapplication.dto.internal.Coordinate;
-import it.unisannio.cityapplication.util.PermissionUtils;
+import it.unisannio.greenbusapplication.dto.NextStationDTO;
+import it.unisannio.greenbusapplication.dto.NextStationRequestDTO;
+import it.unisannio.greenbusapplication.dto.RouteDTO;
+import it.unisannio.greenbusapplication.dto.StationDTO;
+import it.unisannio.greenbusapplication.dto.internal.Coordinate;
+import it.unisannio.greenbusapplication.util.ConstantValues;
+import it.unisannio.greenbusapplication.util.PermissionUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
@@ -52,7 +53,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
 
     private final String TAG = "DriverMap";
     public static final String prefName = "CityApplication";
-    private static String baseURI;
+    private static String baseUrl;
     private SharedPreferences preferences;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean permissionDenied = false;
@@ -76,7 +77,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
         setContentView(R.layout.activity_driver_map);
 
         preferences = getSharedPreferences(prefName, MODE_PRIVATE);
-        baseURI = getString(R.string.local) + "/api/city/";
+        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
 
         Intent fromCaller = getIntent();
         ticket = (String) fromCaller.getSerializableExtra(getResources().getString(R.string.ticket));

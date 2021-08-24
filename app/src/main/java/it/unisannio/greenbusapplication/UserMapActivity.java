@@ -1,4 +1,4 @@
-package it.unisannio.cityapplication;
+package it.unisannio.greenbusapplication;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -30,13 +30,14 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import it.unisannio.cityapplication.dto.RouteDTO;
-import it.unisannio.cityapplication.dto.StationDTO;
-import it.unisannio.cityapplication.dto.TicketDTO;
-import it.unisannio.cityapplication.dto.TripNotificationDTO;
-import it.unisannio.cityapplication.dto.TripRequestDTO;
-import it.unisannio.cityapplication.exception.StationException;
-import it.unisannio.cityapplication.service.CityService;
+import it.unisannio.greenbusapplication.dto.RouteDTO;
+import it.unisannio.greenbusapplication.dto.StationDTO;
+import it.unisannio.greenbusapplication.dto.TicketDTO;
+import it.unisannio.greenbusapplication.dto.TripNotificationDTO;
+import it.unisannio.greenbusapplication.dto.TripRequestDTO;
+import it.unisannio.greenbusapplication.exception.StationException;
+import it.unisannio.greenbusapplication.service.GreenBusService;
+import it.unisannio.greenbusapplication.util.ConstantValues;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
@@ -52,7 +53,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
     private SupportMapFragment mapFragment;
     private UiSettings mUiSettings;
     public static final String prefName = "CityApplication";
-    private static String baseURI;
+    private static String baseUrl;
     private SharedPreferences preferences;
     private List<Marker> stationMarkers;
     private List<StationDTO> stations;
@@ -120,7 +121,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         preferences = getSharedPreferences(prefName, MODE_PRIVATE);
-        baseURI = getString(R.string.local) + "/api/city/";
+        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
         Intent fromCaller = getIntent();
         routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
         client = new OkHttpClient();
@@ -194,12 +195,12 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
 
                     if (checkRoutes(sourceMarker, destinationMarker) && !destination.equals(source)) {
                         AlertDialog title = new AlertDialog.Builder(UserMapActivity.this)
-                                .setTitle(getResources().getString(R.string.confirm_title))
-                                .setMessage(getResources().getString(R.string.source_info)
+                                .setTitle(getResources().getString(R.string.confirm_proposal))
+                                .setMessage(getResources().getString(R.string.pick_up_point)
                                         .concat(" Station ")
                                         .concat(source.getNodeId().toString())
                                         .concat("\n")
-                                        .concat(getResources().getString(R.string.destination_info))
+                                        .concat(getResources().getString(R.string.release_point))
                                         .concat(" Station ")
                                         .concat(destination.getNodeId().toString()))
                                 .setIcon(R.drawable._minibus)
@@ -231,7 +232,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                                     }
                                 }).show();
                     } else {
-                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.rejected_proposal), Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.incorrect_proposal), Snackbar.LENGTH_LONG).show();
                         source = null;
                         destination = null;
                         sourceMarker = null;
@@ -256,16 +257,16 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
-            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
-            CityService cityService = retrofit.create(CityService.class);
+            GreenBusService greenBusService = retrofit.create(GreenBusService.class);
 
             String typeAuth = "Bearer ";
             String jwt = preferences.getString("jwt", null);
 
-            Call<TicketDTO> call = cityService.getTicket(typeAuth.concat(jwt));
+            Call<TicketDTO> call = greenBusService.getTicket(typeAuth.concat(jwt));
 
             retrofit2.Response<TicketDTO> response = null;
             try {
@@ -292,16 +293,16 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
             public void onMessage(WebSocket webSocket, String text) {
 
                 if(text.contains("status"))
-                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_ok), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_accepted), Snackbar.LENGTH_LONG).show();
 
                 TripNotificationDTO tripNotificationDTO = null;
                 if(text.contains("tripId")) {
                     tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);
                     if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED))
-                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_go, tripNotificationDTO.getVehicleLicensePlate(), tripNotificationDTO.getPickUpNodeId()), Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.vehicle_found, tripNotificationDTO.getVehicleLicensePlate(), tripNotificationDTO.getPickUpNodeId()), Snackbar.LENGTH_LONG).show();
 
                     else if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.REJECTED))
-                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_failed), Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_rejected), Snackbar.LENGTH_LONG).show();
                 }
             }
         };

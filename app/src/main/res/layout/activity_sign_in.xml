@@ -11,7 +11,7 @@
         android:layout_width="300dp"
         android:layout_height="50dp"
         android:ems="14"
-        android:text="@string/join_us"
+        android:text="@string/registration"
         android:textSize="30dp"
         android:textColor="@color/purple_500"
         app:layout_constraintBottom_toTopOf="@+id/firstname"

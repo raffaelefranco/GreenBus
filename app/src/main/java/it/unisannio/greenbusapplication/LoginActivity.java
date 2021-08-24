@@ -1,4 +1,4 @@
-package it.unisannio.cityapplication;
+package it.unisannio.greenbusapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,11 +22,12 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import it.unisannio.cityapplication.dto.SessionDTO;
-import it.unisannio.cityapplication.dto.LoginDTO;
-import it.unisannio.cityapplication.dto.RouteDTO;
-import it.unisannio.cityapplication.dto.TicketDTO;
-import it.unisannio.cityapplication.service.CityService;
+import it.unisannio.greenbusapplication.dto.SessionDTO;
+import it.unisannio.greenbusapplication.dto.LoginDTO;
+import it.unisannio.greenbusapplication.dto.RouteDTO;
+import it.unisannio.greenbusapplication.dto.TicketDTO;
+import it.unisannio.greenbusapplication.service.GreenBusService;
+import it.unisannio.greenbusapplication.util.ConstantValues;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -40,7 +40,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String ROLE_PASSENGER = "ROLE_PASSENGER";
     private static final String ROLE_DRIVER = "ROLE_DRIVER";
     private SharedPreferences preferences;
-    private static String baseURI;
+    private static String baseUrl;
     private List<RouteDTO> routes;
     private EditText username;
     private EditText password;
@@ -52,7 +52,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        baseURI = getString(R.string.local) + "/api/city/";
+        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
 
         username = (EditText) findViewById(R.id.username);
         password = (EditText) findViewById(R.id.password);
@@ -90,12 +90,12 @@ public class LoginActivity extends AppCompatActivity {
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
-            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
-            CityService cityService = retrofit.create(CityService.class);
-            Call<SessionDTO> call = cityService.getTokenForLogin(new LoginDTO(username, password));
+            GreenBusService greenBusService = retrofit.create(GreenBusService.class);
+            Call<SessionDTO> call = greenBusService.getTokenForLogin(new LoginDTO(username, password));
             Response<SessionDTO> response = null;
 
             try {
@@ -129,16 +129,16 @@ public class LoginActivity extends AppCompatActivity {
         Handler handler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
-            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseURI)
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
-            CityService cityService = retrofit.create(CityService.class);
+            GreenBusService greenBusService = retrofit.create(GreenBusService.class);
 
             String typeAuth = "Bearer ";
             String jwt = preferences.getString("jwt", null);
 
-            Call<TicketDTO> call = cityService.getTicket(typeAuth.concat(jwt));
+            Call<TicketDTO> call = greenBusService.getTicket(typeAuth.concat(jwt));
 
             retrofit2.Response<TicketDTO> response = null;
             try {

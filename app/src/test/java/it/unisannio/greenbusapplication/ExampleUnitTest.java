@@ -1,4 +1,4 @@
-package it.unisannio.cityapplication;
+package it.unisannio.greenbusapplication;
 
 import org.junit.Test;
 

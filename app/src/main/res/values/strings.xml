@@ -10,17 +10,16 @@
     <string name="routes">routes</string>
     <string name="ticket">ticket</string>
     <string name="login_failed">Login failed</string>
-    <string name="register_failed">Sign in failed</string>
-    <string name="join_us">Registration</string>
-    <string name="register_success">Registration successfull! Now let\'s go to map</string>
-    <string name="rejected_proposal">Source and destination are incorrect</string>
-    <string name="source_info">Pick up point:</string>
-    <string name="destination_info">Release point:</string>
-    <string name="confirm_title">Do you want confirm the proposal?</string>
+    <string name="sign_in_failed">Sign in failed</string>
+    <string name="registration">Registration</string>
+    <string name="registration_successful">Registration successful!</string>
+    <string name="incorrect_proposal">Source and destination are incorrect</string>
+    <string name="pick_up_point">Pick up point:</string>
+    <string name="release_point">Release point:</string>
+    <string name="confirm_proposal">Do you want confirm the proposal?</string>
     <string name="confirm_exit">Do you want exit?</string>
     <string name="not_registered">Not registered?</string>
-    <string name="request_ok">Request accepted! Searching for the best vehicle...</string>
-    <string name="request_go">Vehicle found for your trip! Wait for the vehicle %1$s at Station %2$d.</string>
-    <string name="request_failed">Ops...Your trip wasn\'t approved. Retry...</string>
-    <string name="local">http://10.0.2.2:8080</string>
+    <string name="request_accepted">Request accepted! Searching for the best vehicle…</string>
+    <string name="vehicle_found">Vehicle found for your trip! Wait for the vehicle %1$s at Station %2$d.</string>
+    <string name="request_rejected">Ops… Your trip was rejected. Retry please…</string>
 </resources>

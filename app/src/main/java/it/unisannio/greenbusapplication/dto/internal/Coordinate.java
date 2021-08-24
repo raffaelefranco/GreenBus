@@ -1,4 +1,4 @@
-package it.unisannio.cityapplication.dto.internal;
+package it.unisannio.greenbusapplication.dto.internal;
 
 import java.io.Serializable;
 
