@@ -9,20 +9,24 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_greenbus"
-        android:roundIcon="@mipmap/ic_launcher_greenbus"
         android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_greenbus"
         android:supportsRtl="true"
         android:theme="@style/Theme.CityApplication"
         android:usesCleartextTraffic="true">
-        <activity android:name="it.unisannio.greenbusapplication.StartActivity"><intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+        <activity android:name=".LicensePlateActivity"></activity>
+        <activity android:name=".StartActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
-        <activity android:name="it.unisannio.greenbusapplication.LoginActivity"/>
-        <activity android:name="it.unisannio.greenbusapplication.SignInActivity"/>
-        <activity android:name="it.unisannio.greenbusapplication.UserMapActivity"/>
-        <activity android:name="it.unisannio.greenbusapplication.DriverMapActivity" />
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".SignInActivity" />
+        <activity android:name=".PassengerMapActivity" />
+        <activity android:name=".DriverMapActivity" />
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
@@ -30,4 +34,5 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
     </application>
+
 </manifest>

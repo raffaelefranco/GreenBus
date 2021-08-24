@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -33,7 +34,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class SignInActivity extends AppCompatActivity {
 
     private static final String TAG = "SIGN_IN_ACTIVITY";
-    public static final String sharedPreferencesName = "CityApplication";
+    private static final String sharedPreferencesName = "GreenBusApplication";
+    private static String baseUrl;
     private SharedPreferences sharedPreferences;
     private EditText firstname;
     private EditText lastname;
@@ -41,7 +43,6 @@ public class SignInActivity extends AppCompatActivity {
     private EditText username;
     private EditText password;
     private Button signIn;
-    private static String baseUrl;
 
     private List<RouteDTO> routes;
 
@@ -98,7 +99,7 @@ public class SignInActivity extends AppCompatActivity {
             try {
                 response = call.execute();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             }
             Response<SessionDTO> finalResponse = response;
             handler.post(() -> {
@@ -109,18 +110,14 @@ public class SignInActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             try {
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException interruptedException) {
-                                    interruptedException.printStackTrace();
-                                }
-
-                            } finally {
-                                finish();
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                Log.e(TAG, e.getMessage());
                             }
+
                             SharedPreferences.Editor editor = sharedPreferences.edit();
-                            editor.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
-                            Intent intent = new Intent(SignInActivity.this, UserMapActivity.class);
+                            editor.putString(getResources().getString(R.string.jwt), String.valueOf(finalResponse.body().getJwt())).apply();
+                            Intent intent = new Intent(SignInActivity.this, PassengerMapActivity.class);
                             intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                             startActivity(intent);
                         }

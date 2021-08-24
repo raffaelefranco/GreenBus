@@ -51,45 +51,56 @@ import okhttp3.WebSocketListener;
 
 public class DriverMapActivity extends AppCompatActivity implements GoogleMap.OnMyLocationChangeListener, OnMyLocationButtonClickListener, OnMyLocationClickListener, OnMapReadyCallback, ActivityCompat.OnRequestPermissionsResultCallback {
 
-    private final String TAG = "DriverMap";
-    public static final String prefName = "CityApplication";
-    private static String baseUrl;
-    private SharedPreferences preferences;
+    private static boolean permissionDenied;
+    private static boolean isClose;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private boolean permissionDenied = false;
-    private GoogleMap map;
-    private UiSettings mUiSettings;
-    private List<RouteDTO> routes;
-    private OkHttpClient client;
+    private static final String TAG = "DRIVER_MAP_ACTIVITY";
+    private static final String sharedPreferencesName = "GreenBusApplication";
+    private static String baseUrl;
+    private SharedPreferences sharedPreferences;
+    private GoogleMap googleMap;
+    private SupportMapFragment supportMapFragment;
+    private UiSettings uiSettings;
+    private OkHttpClient okHttpClient;
     private Location oldLocation;
     private Polyline polyline;
-    private String ticket;
-    private WebSocket ws = null;
-    private NextStationDTO nextStationDTO = null;
     private List<Marker> stationMarkers;
-    private List<StationDTO> stations;
-    private static boolean isClose;
 
+    private WebSocket webSocket = null;
+
+    private String oneTimeTicket;
+    private String licensePlate;
+    private List<StationDTO> stations;
+    private List<RouteDTO> routes;
+    private NextStationDTO nextStationDTO = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_map);
 
-        preferences = getSharedPreferences(prefName, MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences(sharedPreferencesName, MODE_PRIVATE);
         baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
+        okHttpClient = new OkHttpClient();
 
         Intent fromCaller = getIntent();
-        ticket = (String) fromCaller.getSerializableExtra(getResources().getString(R.string.ticket));
+        oneTimeTicket = (String) fromCaller.getSerializableExtra(getResources().getString(R.string.oneTimeTicket));
+        licensePlate = (String) fromCaller.getSerializableExtra(getResources().getString(R.string.license_place));
         routes = (List<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
-        client = new OkHttpClient();
 
-        SupportMapFragment mapFragment =
-                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        supportMapFragment.getMapAsync(this);
 
         Gson gson = new Gson();
-        Request request = new Request.Builder().url("ws://10.0.2.2:8080/api/city/drivers?ticket=" + ticket + "&licensePlate=FF222OO").build();
+        String urlString = ConstantValues.webSocketAddress
+                .concat(ConstantValues.baseApi)
+                .concat("drivers")
+                .concat("?ticket=")
+                .concat(oneTimeTicket)
+                .concat("&licensePlate=")
+                .concat(licensePlate);
+
+        Request request = new Request.Builder().url(urlString).build();
 
         WebSocketListener listener = new WebSocketListener() {
             @Override
@@ -113,7 +124,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
                             }
                             if(polyline != null)
                                 polyline.remove();
-                            polyline = map.addPolyline(new PolylineOptions()
+                            polyline = googleMap.addPolyline(new PolylineOptions()
                                     .color(R.color.purple_500)
                                     .clickable(true)
                                     .add(latLngs.toArray(new LatLng[latLngs.size()])));
@@ -126,26 +137,24 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
 
         };
 
-        ws = client.newWebSocket(request, listener);
-        client.dispatcher().executorService().shutdown();
+        webSocket = okHttpClient.newWebSocket(request, listener);
+        okHttpClient.dispatcher().executorService().shutdown();
 
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        map = googleMap;
-        map.setOnMyLocationButtonClickListener(this);
-        map.setOnMyLocationClickListener(this);
-        map.setOnMyLocationChangeListener(this);
+        this.googleMap = googleMap;
+        this.googleMap.setOnMyLocationButtonClickListener(this);
+        this.googleMap.setOnMyLocationClickListener(this);
+        this.googleMap.setOnMyLocationChangeListener(this);
         enableMyLocation();
 
         stationMarkers = new ArrayList<Marker>();
         stations = new ArrayList<StationDTO>();
-
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(
+        this.googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                 new LatLng(routes.get(routes.size() / 2).getStations().get(0).getPosition().getLatitude(),
                         routes.get(routes.size() / 2).getStations().get(0).getPosition().getLongitude()), 11F));
-
 
         Marker marker = null;
         for (RouteDTO r : routes) {
@@ -160,10 +169,10 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
             }
         }
 
-        mUiSettings = map.getUiSettings();
-        mUiSettings.setZoomControlsEnabled(true);
-        mUiSettings.setMyLocationButtonEnabled(true);
-        mUiSettings.setMapToolbarEnabled(true);
+        uiSettings = googleMap.getUiSettings();
+        uiSettings.setZoomControlsEnabled(true);
+        uiSettings.setMyLocationButtonEnabled(true);
+        uiSettings.setMapToolbarEnabled(true);
 
     }
 
@@ -188,8 +197,8 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
     private void enableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            if (map != null) {
-                map.setMyLocationEnabled(true);
+            if (googleMap != null) {
+                googleMap.setMyLocationEnabled(true);
             }
         } else {
             PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION);
@@ -255,19 +264,11 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
 
     @Override
     public void onMyLocationChange(@NonNull @NotNull Location location) {
-
-        /*if(oldLocation != null && !toBeClose(new LatLng(oldLocation.getLatitude(), oldLocation.getLatitude()), new LatLng(location.getLatitude(), location.getLongitude()))) {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                    new LatLng(location.getLatitude(),
-                            location.getLongitude()), 12F));
-        }
-        oldLocation=location;*/
-
         Gson gson = new Gson();
         if(!isClose && nextStationDTO != null && toBeClose(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude()))) {
-            ws.send(gson.toJson(new NextStationRequestDTO(nextStationDTO.getNextStation())));
+            webSocket.send(gson.toJson(new NextStationRequestDTO(nextStationDTO.getNextStation())));
             isClose = true;
-        } else if(!toBeClose(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude()))){
+        } else if(nextStationDTO != null && !toBeClose(new LatLng(location.getLatitude(), location.getLongitude()), new LatLng(nextStationDTO.getNextStation().getPosition().getLatitude(), nextStationDTO.getNextStation().getPosition().getLongitude()))){
             isClose = false;
         }
     }

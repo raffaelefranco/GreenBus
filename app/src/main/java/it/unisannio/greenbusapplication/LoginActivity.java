@@ -39,12 +39,12 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LOGIN_ACTIVITY";
     private static final String sharedPreferencesName = "GreenBusApplication";
+    private static String baseUrl;
     private SharedPreferences sharedPreferences;
     private EditText username;
     private EditText password;
     private Button login;
     private Button signIn;
-    private static String baseUrl;
 
     private List<RouteDTO> routes;
 
@@ -97,19 +97,19 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 response = call.execute();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             }
 
             Response<SessionDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
                     SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
+                    editor.putString(getResources().getString(R.string.jwt), String.valueOf(finalResponse.body().getJwt())).apply();
                     if(finalResponse.body().getRoles().contains(ConstantValues.ROLE_DRIVER)) {
                         getOneTimeTicketTask();
                     }
                     else if(finalResponse.body().getRoles().contains(ConstantValues.ROLE_PASSENGER)) {
-                        Intent intent = new Intent(LoginActivity.this, UserMapActivity.class);
+                        Intent intent = new Intent(LoginActivity.this, PassengerMapActivity.class);
                         intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                         startActivity(intent);
                     }
@@ -130,21 +130,21 @@ public class LoginActivity extends AppCompatActivity {
                     .build();
             GreenBusService greenBusService = retrofit.create(GreenBusService.class);
 
-            String typeAuth = "Bearer ";
-            String jwt = sharedPreferences.getString("jwt", null);
-            Call<TicketDTO> call = greenBusService.getTicket(typeAuth.concat(jwt));
-            retrofit2.Response<TicketDTO> response = null;
+            String authType = getResources().getString(R.string.authType);
+            String jwt = sharedPreferences.getString(getResources().getString(R.string.jwt), null);
+            Call<TicketDTO> call = greenBusService.getTicket(authType.concat(" ").concat(jwt));
+            Response<TicketDTO> response = null;
             try {
                 response = call.execute();
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             }
-            retrofit2.Response<TicketDTO> finalResponse = response;
+            Response<TicketDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
-                    Intent intent = new Intent(LoginActivity.this, DriverMapActivity.class);
+                    Intent intent = new Intent(LoginActivity.this, LicensePlateActivity.class);
                     intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
-                    intent.putExtra(getResources().getString(R.string.ticket), (Serializable) finalResponse.body().getOneTimeTicket());
+                    intent.putExtra(getResources().getString(R.string.oneTimeTicket), (Serializable) finalResponse.body().getOneTimeTicket());
                     startActivity(intent);
                 } else {
                     Log.e(TAG, String.valueOf(finalResponse.code()));
