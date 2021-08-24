@@ -9,8 +9,8 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_greenbus"
-        android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_greenbus"
+        android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.CityApplication"
         android:usesCleartextTraffic="true">
@@ -23,6 +23,9 @@
         <activity android:name="it.unisannio.greenbusapplication.SignInActivity"/>
         <activity android:name="it.unisannio.greenbusapplication.UserMapActivity"/>
         <activity android:name="it.unisannio.greenbusapplication.DriverMapActivity" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />

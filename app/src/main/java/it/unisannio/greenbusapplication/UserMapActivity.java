@@ -119,7 +119,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map);
+        setContentView(R.layout.activity_user_map);
         preferences = getSharedPreferences(prefName, MODE_PRIVATE);
         baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
         Intent fromCaller = getIntent();
@@ -155,7 +155,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                 if (!stations.contains(s)) {
                     stations.add(s);
                     marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getPosition().getLatitude(), s.getPosition().getLongitude())));
-                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_marker));
                     //marker.setAlpha(0.6f);
                     stationMarkers.add(marker);
                 }
@@ -180,7 +180,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                 ArrayList<Marker> markersToColor = getMarkersByStations(stationsByRoute);
 
                 for (Marker m : markersToColor)
-                    m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station_selected));
+                    m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.green_marker));
 
                 marker.setAlpha(0.3f);
 
@@ -203,12 +203,12 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                                         .concat(getResources().getString(R.string.release_point))
                                         .concat(" Station ")
                                         .concat(destination.getNodeId().toString()))
-                                .setIcon(R.drawable._minibus)
+                                .setIcon(R.drawable.ic_bus)
                                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                                     public void onClick(DialogInterface dialog, int whichButton) {
                                         for (Marker m : stationMarkers) {
-                                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
+                                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_marker));
                                             m.setAlpha(1f);
                                         }
                                         ticketTask(source.getNodeId(), destination.getNodeId());
@@ -226,7 +226,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                                         sourceMarker = null;
                                         destinationMarker = null;
                                         for (Marker m : stationMarkers) {
-                                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
+                                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_marker));
                                             m.setAlpha(1f);
                                         }
                                     }
@@ -238,7 +238,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
                         sourceMarker = null;
                         destinationMarker = null;
                         for (Marker m : stationMarkers) {
-                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station));
+                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_marker));
                             m.setAlpha(1f);
                         }
                     }
@@ -322,7 +322,7 @@ public class UserMapActivity extends AppCompatActivity implements OnMapReadyCall
     public void onBackPressed() {
         AlertDialog title = new AlertDialog.Builder(UserMapActivity.this)
                 .setTitle(getResources().getString(R.string.confirm_exit))
-                .setIcon(R.drawable._minibus)
+                .setIcon(R.drawable.ic_bus)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {

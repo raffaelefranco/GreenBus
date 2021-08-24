@@ -153,7 +153,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
                 if (!stations.contains(s)) {
                     stations.add(s);
                     marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getPosition().getLatitude(), s.getPosition().getLongitude())));
-                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.station_selected));
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.green_marker));
                     //marker.setAlpha(0.6f);
                     stationMarkers.add(marker);
                 }
@@ -237,7 +237,7 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
     public void onBackPressed() {
         AlertDialog title = new AlertDialog.Builder(DriverMapActivity.this)
                 .setTitle(getResources().getString(R.string.confirm_exit))
-                .setIcon(R.drawable._minibus)
+                .setIcon(R.drawable.ic_bus)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {

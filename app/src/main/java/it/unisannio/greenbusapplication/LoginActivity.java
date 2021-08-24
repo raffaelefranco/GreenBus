@@ -9,9 +9,11 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -35,32 +37,28 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String TAG = "Login";
-    private static final String prefName = "CityApplication";
-    private static final String ROLE_PASSENGER = "ROLE_PASSENGER";
-    private static final String ROLE_DRIVER = "ROLE_DRIVER";
-    private SharedPreferences preferences;
-    private static String baseUrl;
-    private List<RouteDTO> routes;
+    private static final String TAG = "LOGIN_ACTIVITY";
+    private static final String sharedPreferencesName = "GreenBusApplication";
+    private SharedPreferences sharedPreferences;
     private EditText username;
     private EditText password;
     private Button login;
     private Button signIn;
+    private static String baseUrl;
+
+    private List<RouteDTO> routes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
-
+        sharedPreferences = getSharedPreferences(sharedPreferencesName, MODE_PRIVATE);
         username = (EditText) findViewById(R.id.username);
         password = (EditText) findViewById(R.id.password);
         login = (Button) findViewById(R.id.login);
         signIn = (Button) findViewById(R.id.sign_in);
-
-        preferences = getSharedPreferences(prefName, MODE_PRIVATE);
-
+        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
         Intent fromCaller = getIntent();
         routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
 
@@ -73,7 +71,6 @@ public class LoginActivity extends AppCompatActivity {
                     Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.login_failed), Snackbar.LENGTH_LONG).show();
             }
         });
-
         signIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -82,7 +79,6 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
     }
 
     private void loginTask(String username, String password) {
@@ -103,16 +99,17 @@ public class LoginActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
             Response<SessionDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
-                    SharedPreferences.Editor edit = preferences.edit();
-                    edit.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
-                    if(finalResponse.body().getRoles().contains(ROLE_DRIVER)) {
-                        ticketTask();
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
+                    if(finalResponse.body().getRoles().contains(ConstantValues.ROLE_DRIVER)) {
+                        getOneTimeTicketTask();
                     }
-                    else if(finalResponse.body().getRoles().contains(ROLE_PASSENGER)) {
-                       Intent intent = new Intent(LoginActivity.this, UserMapActivity.class);
+                    else if(finalResponse.body().getRoles().contains(ConstantValues.ROLE_PASSENGER)) {
+                        Intent intent = new Intent(LoginActivity.this, UserMapActivity.class);
                         intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                         startActivity(intent);
                     }
@@ -123,8 +120,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void ticketTask() {
-
+    private void getOneTimeTicketTask() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
@@ -132,14 +128,11 @@ public class LoginActivity extends AppCompatActivity {
             Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
-
             GreenBusService greenBusService = retrofit.create(GreenBusService.class);
 
             String typeAuth = "Bearer ";
-            String jwt = preferences.getString("jwt", null);
-
+            String jwt = sharedPreferences.getString("jwt", null);
             Call<TicketDTO> call = greenBusService.getTicket(typeAuth.concat(jwt));
-
             retrofit2.Response<TicketDTO> response = null;
             try {
                 response = call.execute();
@@ -153,6 +146,9 @@ public class LoginActivity extends AppCompatActivity {
                     intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                     intent.putExtra(getResources().getString(R.string.ticket), (Serializable) finalResponse.body().getOneTimeTicket());
                     startActivity(intent);
+                } else {
+                    Log.e(TAG, String.valueOf(finalResponse.code()));
+                    Toast.makeText(getApplicationContext(), getResources().getString(R.string.server_problem), Toast.LENGTH_LONG).show();
                 }
             });
         });
@@ -163,7 +159,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onBackPressed() {
         AlertDialog title = new AlertDialog.Builder(LoginActivity.this)
                 .setTitle(getResources().getString(R.string.confirm_exit))
-                .setIcon(R.drawable._minibus)
+                .setIcon(R.drawable.ic_bus)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
                     public void onClick(DialogInterface dialog, int whichButton) {

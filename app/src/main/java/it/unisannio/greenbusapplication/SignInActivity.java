@@ -32,33 +32,32 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SignInActivity extends AppCompatActivity {
 
-    private static final String TAG = "SignIn";
-    public static final String prefName = "CityApplication";
-    private static String baseUrl;
-    private List<RouteDTO> routes;
-    private SharedPreferences preferences;
+    private static final String TAG = "SIGN_IN_ACTIVITY";
+    public static final String sharedPreferencesName = "CityApplication";
+    private SharedPreferences sharedPreferences;
     private EditText firstname;
     private EditText lastname;
     private EditText email;
     private EditText username;
     private EditText password;
     private Button signIn;
+    private static String baseUrl;
+
+    private List<RouteDTO> routes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
-        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
 
         firstname = (EditText) findViewById(R.id.firstname);
         lastname = (EditText) findViewById(R.id.lastname);
         email = (EditText) findViewById(R.id.email);
         username = (EditText) findViewById(R.id.username);
         password = (EditText) findViewById(R.id.password);
-
-        preferences = getSharedPreferences(prefName, MODE_PRIVATE);
-
         signIn = (Button) findViewById(R.id.sign_in);
+        sharedPreferences = getSharedPreferences(sharedPreferencesName, MODE_PRIVATE);
+        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
 
         Intent fromCaller = getIntent();
         routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
@@ -119,8 +118,8 @@ public class SignInActivity extends AppCompatActivity {
                             } finally {
                                 finish();
                             }
-                            SharedPreferences.Editor edit = preferences.edit();
-                            edit.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putString("jwt", String.valueOf(finalResponse.body().getJwt())).apply();
                             Intent intent = new Intent(SignInActivity.this, UserMapActivity.class);
                             intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                             startActivity(intent);

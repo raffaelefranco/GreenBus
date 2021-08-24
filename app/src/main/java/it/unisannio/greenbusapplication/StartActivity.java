@@ -26,7 +26,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class StartActivity extends AppCompatActivity {
 
-    private final static String TAG = "Start";
+    private final static String TAG = "START_ACTIVITY";
     private static String baseUrl;
     private List<RouteDTO> routes;
 
@@ -42,25 +42,17 @@ public class StartActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    try {
-                        Thread.sleep(2500);
-                    } catch (InterruptedException interruptedException) {
-                        interruptedException.printStackTrace();
-                    }
-
-                } finally {
-                    finish();
+                    Thread.sleep(2500);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
                 }
                 getInitialInfoTask();
             }
-
         });
         thread.start();
-
     }
 
     private void getInitialInfoTask() {
-
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
@@ -80,14 +72,14 @@ public class StartActivity extends AppCompatActivity {
 
             Response<List<RouteDTO>> finalResponse = response;
             handler.post(() -> {
-
-                if(finalResponse.code() == 200)
-                    Toast.makeText(StartActivity.this, "ok", Toast.LENGTH_LONG);
-
-                Intent intent = new Intent(StartActivity.this, LoginActivity.class);
-                //intent.putExtra(getResources().getString(R.string.routes), (Serializable) finalResponse.body());
-                startActivity(intent);
-
+                if(finalResponse.code() == 200) {
+                    Intent intent = new Intent(StartActivity.this, LoginActivity.class);
+                    intent.putExtra(getResources().getString(R.string.routes), (Serializable) finalResponse.body());
+                    startActivity(intent);
+                } else {
+                    Log.e(TAG, String.valueOf(finalResponse.code()));
+                    Toast.makeText(getApplicationContext(), getResources().getString(R.string.server_problem), Toast.LENGTH_LONG).show();
+                }
             });
         });
     }
