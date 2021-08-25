@@ -81,6 +81,41 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    private void getOneTimeTicketTask() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            GreenBusService greenBusService = retrofit.create(GreenBusService.class);
+
+            String authType = getResources().getString(R.string.authType);
+            String jwt = sharedPreferences.getString(getResources().getString(R.string.jwt), null);
+            Call<TicketDTO> call = greenBusService.getTicket(authType.concat(" ").concat(jwt));
+            Response<TicketDTO> response = null;
+            try {
+                response = call.execute();
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+            }
+            Response<TicketDTO> finalResponse = response;
+            handler.post(() -> {
+                if (finalResponse.code() == 200) {
+                    Intent intent = new Intent(LoginActivity.this, LicensePlateActivity.class);
+                    intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
+                    intent.putExtra(getResources().getString(R.string.oneTimeTicket), (Serializable) finalResponse.body().getOneTimeTicket());
+                    startActivity(intent);
+                } else {
+                    Log.e(TAG, String.valueOf(finalResponse.code()));
+                    Toast.makeText(getApplicationContext(), getResources().getString(R.string.server_problem), Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+
+    }
+
     private void loginTask(String username, String password) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -117,41 +152,6 @@ public class LoginActivity extends AppCompatActivity {
                 }
             });
         });
-    }
-
-    private void getOneTimeTicketTask() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-
-        executor.execute(() -> {
-            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-            GreenBusService greenBusService = retrofit.create(GreenBusService.class);
-
-            String authType = getResources().getString(R.string.authType);
-            String jwt = sharedPreferences.getString(getResources().getString(R.string.jwt), null);
-            Call<TicketDTO> call = greenBusService.getTicket(authType.concat(" ").concat(jwt));
-            Response<TicketDTO> response = null;
-            try {
-                response = call.execute();
-            } catch (IOException e) {
-                Log.e(TAG, e.getMessage());
-            }
-            Response<TicketDTO> finalResponse = response;
-            handler.post(() -> {
-                if (finalResponse.code() == 200) {
-                    Intent intent = new Intent(LoginActivity.this, LicensePlateActivity.class);
-                    intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
-                    intent.putExtra(getResources().getString(R.string.oneTimeTicket), (Serializable) finalResponse.body().getOneTimeTicket());
-                    startActivity(intent);
-                } else {
-                    Log.e(TAG, String.valueOf(finalResponse.code()));
-                    Toast.makeText(getApplicationContext(), getResources().getString(R.string.server_problem), Toast.LENGTH_LONG).show();
-                }
-            });
-        });
-
     }
 
     @Override

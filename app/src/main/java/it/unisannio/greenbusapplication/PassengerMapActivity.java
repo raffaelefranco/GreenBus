@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
@@ -57,6 +58,9 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
     private static final String TAG = "PASSENGER_MAP_ACTIVITY";
     private static final String sharedPreferencesName = "GreenBusApplication";
     private static String baseUrl;
+    private static String urlString;
+    private static Gson gson;
+
     private SharedPreferences sharedPreferences;
     private OkHttpClient okHttpClient;
 
@@ -69,6 +73,9 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
     private List<RouteDTO> routes;
     private StationDTO source;
     private StationDTO destination;
+    private String oneTimeTicket;
+    private WebSocket webSocket;
+    private WebSocketListener webSocketListener;
 
     private boolean checkCoordinates(LatLng latLng, StationDTO s) {
         return latLng.latitude == s.getPosition().getLatitude() && latLng.longitude == s.getPosition().getLongitude();
@@ -121,7 +128,7 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
         return markers;
     }
 
-    private void getTicketTask(Integer sourceNode, Integer destinationNode) {
+    private void getOneTimeTicketTask(Integer sourceNode, Integer destinationNode) {
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -145,23 +152,50 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
             Response<TicketDTO> finalResponse = response;
             handler.post(() -> {
                 if (finalResponse.code() == 200) {
-                    start(finalResponse.body().getOneTimeTicket(), sourceNode, destinationNode);
+                    oneTimeTicket = finalResponse.body().getOneTimeTicket();
+                    sendRequest(sourceNode, destinationNode);
+                } else {
+                    Log.e(TAG, String.valueOf(finalResponse.code()));
+                    Toast.makeText(getApplicationContext(), getResources().getString(R.string.server_problem), Toast.LENGTH_LONG).show();
                 }
             });
         });
 
     }
 
-    private void start(String ott, Integer sourceNode, Integer destinationNode) {
-        Gson gson = new Gson();
-        String urlString = Values.webSocketAddress
+    private void sendRequest(Integer sourceNode, Integer destinationNode) {
+        TripRequestDTO tripRequestDTO = new TripRequestDTO();
+        tripRequestDTO.setOsmidSource(sourceNode);
+        tripRequestDTO.setOsmidDestination(destinationNode);
+
+        if (webSocket == null) {
+            urlString = urlString.concat(oneTimeTicket);
+            Request request = new Request.Builder().url(urlString).build();
+            webSocket = okHttpClient.newWebSocket(request, webSocketListener);
+            okHttpClient.dispatcher().executorService().shutdown();
+        }
+        webSocket.send(gson.toJson(tripRequestDTO, TripRequestDTO.class));
+
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_passenger_map);
+
+        sharedPreferences = getSharedPreferences(sharedPreferencesName, MODE_PRIVATE);
+        gson = new Gson();
+        baseUrl = Values.localAddress + Values.baseApi;
+        urlString = Values.webSocketAddress
                 .concat(Values.baseApi)
                 .concat("notifications")
-                .concat("?ticket=")
-                .concat(ott);
-        Request request = new Request.Builder().url(urlString).build();
+                .concat("?ticket=");
 
-        WebSocketListener listener = new WebSocketListener() {
+        Intent fromCaller = getIntent();
+        routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
+
+        okHttpClient = new OkHttpClient();
+        webSocketListener = new WebSocketListener() {
             @Override
             public void onMessage(WebSocket webSocket, String text) {
 
@@ -194,30 +228,6 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
                 }
             }
         };
-
-        TripRequestDTO tripRequestDTO = new TripRequestDTO();
-        tripRequestDTO.setOsmidSource(sourceNode);
-        tripRequestDTO.setOsmidDestination(destinationNode);
-
-        WebSocket ws = okHttpClient.newWebSocket(request, listener);
-        okHttpClient.dispatcher().executorService().shutdown();
-
-        ws.send(gson.toJson(tripRequestDTO, TripRequestDTO.class));
-
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_passenger_map);
-
-        sharedPreferences = getSharedPreferences(sharedPreferencesName, MODE_PRIVATE);
-        baseUrl = Values.localAddress + Values.baseApi;
-
-        Intent fromCaller = getIntent();
-        routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
-
-        okHttpClient = new OkHttpClient();
         SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         supportMapFragment.getMapAsync(this);
 
@@ -301,7 +311,11 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
                                             m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_marker));
                                             m.setAlpha(1f);
                                         }
-                                        getTicketTask(source.getNodeId(), destination.getNodeId());
+                                        if (oneTimeTicket == null)
+                                            getOneTimeTicketTask(source.getNodeId(), destination.getNodeId());
+                                        else
+                                            sendRequest(source.getNodeId(), destination.getNodeId());
+
                                         source = null;
                                         destination = null;
                                         sourceMarker = null;
