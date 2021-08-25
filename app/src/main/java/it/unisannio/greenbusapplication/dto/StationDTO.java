@@ -9,7 +9,8 @@ public class StationDTO implements Serializable {
     private Integer nodeId;
     private Coordinate position;
 
-    public StationDTO() { }
+    public StationDTO() {
+    }
 
 
     public StationDTO(Integer nodeId, Coordinate position) {

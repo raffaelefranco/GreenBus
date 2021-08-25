@@ -4,15 +4,13 @@ import java.io.Serializable;
 
 public class TripNotificationDTO implements Serializable {
 
-    public enum Status { APPROVED, REJECTED }
-
     private String tripId;
     private String vehicleLicensePlate;
     private Integer pickUpNodeId;
-
     private Status status;
 
-    public TripNotificationDTO() { }
+    public TripNotificationDTO() {
+    }
 
     public TripNotificationDTO(String tripId, String vehicleLicensePlate, Integer pickUpNodeId, Status status) {
         this.tripId = tripId;
@@ -52,5 +50,7 @@ public class TripNotificationDTO implements Serializable {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    public enum Status {APPROVED, REJECTED}
 }
 

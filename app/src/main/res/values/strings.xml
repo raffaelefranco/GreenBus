@@ -21,6 +21,8 @@
     <string name="not_registered">Not registered?</string>
     <string name="request_accepted">Request accepted! Searching for the best vehicle…</string>
     <string name="vehicle_found">Vehicle found for your trip! Wait for the vehicle %1$s at Station %2$d.</string>
+    <string name="vehicle_found_title">Vehicle found for your trip!</string>
+    <string name="vehicle_found_description">Wait for the vehicle %1$s at Station %2$d.</string>
     <string name="request_rejected">Ops… Your trip was rejected. Retry please…</string>
     <string name="server_problem">Problem with server!</string>
     <string name="authType">Bearer </string>
@@ -28,4 +30,8 @@
     <string name="license_place">License Plate</string>
     <string name="go">Let\'s Go</string>
     <string name="input_error">Input error</string>
+    <string name="station">Station</string>
+    <string name="current_location">Current location:</string>
+    <string name="location_button">Finding your location…</string>
+    <string name="new_route">A new route is viewed!</string>
 </resources>

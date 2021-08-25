@@ -1,7 +1,5 @@
 package it.unisannio.greenbusapplication;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,6 +13,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
@@ -24,12 +24,12 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import it.unisannio.greenbusapplication.dto.SessionDTO;
 import it.unisannio.greenbusapplication.dto.LoginDTO;
 import it.unisannio.greenbusapplication.dto.RouteDTO;
+import it.unisannio.greenbusapplication.dto.SessionDTO;
 import it.unisannio.greenbusapplication.dto.TicketDTO;
 import it.unisannio.greenbusapplication.service.GreenBusService;
-import it.unisannio.greenbusapplication.util.ConstantValues;
+import it.unisannio.greenbusapplication.util.Values;
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -54,11 +54,11 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         sharedPreferences = getSharedPreferences(sharedPreferencesName, MODE_PRIVATE);
-        username = (EditText) findViewById(R.id.username);
-        password = (EditText) findViewById(R.id.password);
-        login = (Button) findViewById(R.id.login);
-        signIn = (Button) findViewById(R.id.sign_in);
-        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
+        username = findViewById(R.id.username);
+        password = findViewById(R.id.password);
+        login = findViewById(R.id.login);
+        signIn = findViewById(R.id.sign_in);
+        baseUrl = Values.localAddress + Values.baseApi;
         Intent fromCaller = getIntent();
         routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
 
@@ -105,10 +105,9 @@ public class LoginActivity extends AppCompatActivity {
                 if (finalResponse.code() == 200) {
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString(getResources().getString(R.string.jwt), String.valueOf(finalResponse.body().getJwt())).apply();
-                    if(finalResponse.body().getRoles().contains(ConstantValues.ROLE_DRIVER)) {
+                    if (finalResponse.body().getRoles().contains(Values.ROLE_DRIVER)) {
                         getOneTimeTicketTask();
-                    }
-                    else if(finalResponse.body().getRoles().contains(ConstantValues.ROLE_PASSENGER)) {
+                    } else if (finalResponse.body().getRoles().contains(Values.ROLE_PASSENGER)) {
                         Intent intent = new Intent(LoginActivity.this, PassengerMapActivity.class);
                         intent.putExtra(getResources().getString(R.string.routes), (Serializable) routes);
                         startActivity(intent);
@@ -172,6 +171,6 @@ public class LoginActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
 
                     }
-        }).show();
+                }).show();
     }
 }

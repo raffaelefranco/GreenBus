@@ -9,7 +9,8 @@ public class SessionDTO implements Serializable {
     private String jwt;
     private List<String> roles;
 
-    public SessionDTO() { }
+    public SessionDTO() {
+    }
 
     public String getJwt() {
         return jwt;

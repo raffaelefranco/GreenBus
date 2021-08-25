@@ -10,7 +10,8 @@ public class NextStationDTO implements Serializable {
     private StationDTO nextStation;
     private List<Coordinate> minPath;
 
-    public NextStationDTO() { }
+    public NextStationDTO() {
+    }
 
     public NextStationDTO(StationDTO nextStation) {
         this.nextStation = nextStation;

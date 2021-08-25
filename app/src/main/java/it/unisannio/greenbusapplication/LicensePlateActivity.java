@@ -1,14 +1,13 @@
 package it.unisannio.greenbusapplication;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -34,8 +33,8 @@ public class LicensePlateActivity extends AppCompatActivity {
         routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
         oneTimeTicket = (String) fromCaller.getSerializableExtra(getResources().getString(R.string.oneTimeTicket));
 
-        licensePlate = (EditText) findViewById(R.id.license_plate);
-        go = (Button) findViewById(R.id.go);
+        licensePlate = findViewById(R.id.license_plate);
+        go = findViewById(R.id.go);
 
         go.setOnClickListener(new View.OnClickListener() {
             @Override

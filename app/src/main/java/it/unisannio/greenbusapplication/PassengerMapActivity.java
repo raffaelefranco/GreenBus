@@ -1,6 +1,9 @@
 package it.unisannio.greenbusapplication;
 
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,6 +13,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -38,7 +42,7 @@ import it.unisannio.greenbusapplication.dto.TripNotificationDTO;
 import it.unisannio.greenbusapplication.dto.TripRequestDTO;
 import it.unisannio.greenbusapplication.exception.StationException;
 import it.unisannio.greenbusapplication.service.GreenBusService;
-import it.unisannio.greenbusapplication.util.ConstantValues;
+import it.unisannio.greenbusapplication.util.Values;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
@@ -54,9 +58,6 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
     private static final String sharedPreferencesName = "GreenBusApplication";
     private static String baseUrl;
     private SharedPreferences sharedPreferences;
-    private GoogleMap googleMap;
-    private SupportMapFragment supportMapFragment;
-    private UiSettings uiSettings;
     private OkHttpClient okHttpClient;
 
     private List<Marker> stationMarkers;
@@ -72,6 +73,7 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
     private boolean checkCoordinates(LatLng latLng, StationDTO s) {
         return latLng.latitude == s.getPosition().getLatitude() && latLng.longitude == s.getPosition().getLongitude();
     }
+
     private boolean checkRoutes(Marker sourceMarker, Marker destinationMarker) {
         List<String> sourceMarkerStrings = getAssociateRoute(sourceMarker);
         List<String> destinationMarkerStrings = getAssociateRoute(destinationMarker);
@@ -84,6 +86,7 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
         }
         return false;
     }
+
     private StationDTO getStationByMarker(Marker marker) {
         for (StationDTO s : stations)
             if (checkCoordinates(marker.getPosition(), s))
@@ -92,6 +95,7 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
         throw new StationException();
 
     }
+
     private List<String> getAssociateRoute(Marker marker) {
 
         List<String> routeStrings = new ArrayList<>();
@@ -106,6 +110,7 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
         return routeStrings;
 
     }
+
     private ArrayList<Marker> getMarkersByStations(ArrayList<StationDTO> stationsR) {
         ArrayList<Marker> markers = new ArrayList<>();
 
@@ -116,30 +121,112 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
         return markers;
     }
 
+    private void getTicketTask(Integer sourceNode, Integer destinationNode) {
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            GreenBusService greenBusService = retrofit.create(GreenBusService.class);
+
+            String authType = getResources().getString(R.string.authType);
+            String jwt = sharedPreferences.getString(getResources().getString(R.string.jwt), null);
+            Call<TicketDTO> call = greenBusService.getTicket(authType.concat(" ").concat(jwt));
+            Response<TicketDTO> response = null;
+            try {
+                response = call.execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Response<TicketDTO> finalResponse = response;
+            handler.post(() -> {
+                if (finalResponse.code() == 200) {
+                    start(finalResponse.body().getOneTimeTicket(), sourceNode, destinationNode);
+                }
+            });
+        });
+
+    }
+
+    private void start(String ott, Integer sourceNode, Integer destinationNode) {
+        Gson gson = new Gson();
+        String urlString = Values.webSocketAddress
+                .concat(Values.baseApi)
+                .concat("notifications")
+                .concat("?ticket=")
+                .concat(ott);
+        Request request = new Request.Builder().url(urlString).build();
+
+        WebSocketListener listener = new WebSocketListener() {
+            @Override
+            public void onMessage(WebSocket webSocket, String text) {
+
+                Log.d(TAG, text);
+
+                if (text.contains(Values.STATUS))
+                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_accepted), Snackbar.LENGTH_LONG).show();
+
+                TripNotificationDTO tripNotificationDTO = null;
+                if (text.contains(Values.TRIP)) {
+                    tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);
+                    if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED)) {
+                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.vehicle_found, tripNotificationDTO.getVehicleLicensePlate(), tripNotificationDTO.getPickUpNodeId()), Snackbar.LENGTH_LONG).show();
+
+                        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            NotificationChannel notificationChannel = new NotificationChannel(Values.channelId, Values.channelName, NotificationManager.IMPORTANCE_HIGH);
+                            notificationChannel.enableLights(true);
+                            notificationManager.createNotificationChannel(notificationChannel);
+                        }
+                        NotificationCompat.Builder builder = new NotificationCompat.Builder(PassengerMapActivity.this, Values.channelId)
+                                .setSmallIcon(R.drawable.green_marker)
+                                .setContentTitle(getResources().getString(R.string.vehicle_found_title))
+                                .setContentText(getResources().getString(R.string.vehicle_found_description, tripNotificationDTO.getVehicleLicensePlate(), tripNotificationDTO.getPickUpNodeId()))
+                                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                        manager.notify(0, builder.build());
+                    } else if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.REJECTED))
+                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_rejected), Snackbar.LENGTH_LONG).show();
+                }
+            }
+        };
+
+        TripRequestDTO tripRequestDTO = new TripRequestDTO();
+        tripRequestDTO.setOsmidSource(sourceNode);
+        tripRequestDTO.setOsmidDestination(destinationNode);
+
+        WebSocket ws = okHttpClient.newWebSocket(request, listener);
+        okHttpClient.dispatcher().executorService().shutdown();
+
+        ws.send(gson.toJson(tripRequestDTO, TripRequestDTO.class));
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_passenger_map);
 
         sharedPreferences = getSharedPreferences(sharedPreferencesName, MODE_PRIVATE);
-        baseUrl = ConstantValues.localAddress + ConstantValues.baseApi;
+        baseUrl = Values.localAddress + Values.baseApi;
 
         Intent fromCaller = getIntent();
         routes = (ArrayList<RouteDTO>) fromCaller.getSerializableExtra(getResources().getString(R.string.routes));
 
         okHttpClient = new OkHttpClient();
-        supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         supportMapFragment.getMapAsync(this);
-        source = null;
-        destination = null;
 
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        this.googleMap = googleMap;
-        this.googleMap.setOnMapClickListener(this);
-        this.googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+        googleMap.setOnMapClickListener(this);
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                 new LatLng(routes.get(routes.size() / 2).getStations().get(0).getPosition().getLatitude(),
                         routes.get(routes.size() / 2).getStations().get(0).getPosition().getLongitude()), 11F));
 
@@ -156,13 +243,12 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
                     stations.add(s);
                     marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(s.getPosition().getLatitude(), s.getPosition().getLongitude())));
                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_marker));
-                    //marker.setAlpha(0.6f);
                     stationMarkers.add(marker);
                 }
             }
         }
 
-        uiSettings = googleMap.getUiSettings();
+        UiSettings uiSettings = googleMap.getUiSettings();
         uiSettings.setZoomControlsEnabled(true);
         uiSettings.setMyLocationButtonEnabled(true);
         uiSettings.setMapToolbarEnabled(true);
@@ -197,11 +283,15 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
                         AlertDialog title = new AlertDialog.Builder(PassengerMapActivity.this)
                                 .setTitle(getResources().getString(R.string.confirm_proposal))
                                 .setMessage(getResources().getString(R.string.pick_up_point)
-                                        .concat(" Station ")
+                                        .concat(" ")
+                                        .concat(getResources().getString(R.string.station))
+                                        .concat(" ")
                                         .concat(source.getNodeId().toString())
                                         .concat("\n")
                                         .concat(getResources().getString(R.string.release_point))
-                                        .concat(" Station ")
+                                        .concat(" ")
+                                        .concat(getResources().getString(R.string.station))
+                                        .concat(" ")
                                         .concat(destination.getNodeId().toString()))
                                 .setIcon(R.drawable.ic_bus)
                                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -251,78 +341,6 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
 
     }
 
-    private void getTicketTask(Integer sourceNode, Integer destinationNode) {
-
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-
-        executor.execute(() -> {
-            Retrofit retrofit = new Retrofit.Builder().baseUrl(baseUrl)
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-
-            GreenBusService greenBusService = retrofit.create(GreenBusService.class);
-
-            String authType = getResources().getString(R.string.authType);
-            String jwt = sharedPreferences.getString(getResources().getString(R.string.jwt), null);
-            Call<TicketDTO> call = greenBusService.getTicket(authType.concat(" ").concat(jwt));
-            Response<TicketDTO> response = null;
-            try {
-                response = call.execute();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            Response<TicketDTO> finalResponse = response;
-            handler.post(() -> {
-                if (finalResponse.code() == 200) {
-                    start(finalResponse.body().getOneTimeTicket(), sourceNode, destinationNode);
-                }
-            });
-        });
-
-    }
-
-    private void start(String ott, Integer sourceNode, Integer destinationNode) {
-        Gson gson = new Gson();
-        String urlString = ConstantValues.webSocketAddress
-                .concat(ConstantValues.baseApi)
-                .concat("notifications")
-                .concat("?ticket=")
-                .concat(ott);
-        Request request = new Request.Builder().url(urlString).build();
-
-        WebSocketListener listener = new WebSocketListener() {
-            @Override
-            public void onMessage(WebSocket webSocket, String text) {
-
-                Log.d(TAG, text);
-
-                if(text.contains("status"))
-                    Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_accepted), Snackbar.LENGTH_LONG).show();
-
-                TripNotificationDTO tripNotificationDTO = null;
-                if(text.contains("tripId")) {
-                    tripNotificationDTO = gson.fromJson(text, TripNotificationDTO.class);
-                    if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.APPROVED))
-                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.vehicle_found, tripNotificationDTO.getVehicleLicensePlate(), tripNotificationDTO.getPickUpNodeId()), Snackbar.LENGTH_LONG).show();
-
-                    else if (tripNotificationDTO != null && tripNotificationDTO.getStatus().equals(TripNotificationDTO.Status.REJECTED))
-                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.request_rejected), Snackbar.LENGTH_LONG).show();
-                }
-            }
-        };
-
-        TripRequestDTO tripRequestDTO = new TripRequestDTO();
-        tripRequestDTO.setOsmidSource(sourceNode);
-        tripRequestDTO.setOsmidDestination(destinationNode);
-
-        WebSocket ws = okHttpClient.newWebSocket(request, listener);
-        okHttpClient.dispatcher().executorService().shutdown();
-
-        ws.send(gson.toJson(tripRequestDTO, TripRequestDTO.class));
-
-    }
-
     @Override
     public void onBackPressed() {
         AlertDialog title = new AlertDialog.Builder(PassengerMapActivity.this)
@@ -342,6 +360,7 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
                     }
                 }).show();
     }
+
     @Override
     public void onMapClick(LatLng latLng) {
         Log.d(TAG, latLng.toString());
