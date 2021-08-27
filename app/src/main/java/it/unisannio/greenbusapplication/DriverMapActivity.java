@@ -134,6 +134,8 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
 
                 Log.d(TAG, text);
                 nextStationDTO = gson.fromJson(text, NextStationDTO.class);
+                isClose = false;
+
                 if (nextStationDTO.getMinPath() != null) {
 
                     Handler mainHandler = new Handler(getMainLooper());
@@ -171,8 +173,6 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
                     });
                 }
             }
-
-
         };
 
         webSocket = okHttpClient.newWebSocket(request, listener);
