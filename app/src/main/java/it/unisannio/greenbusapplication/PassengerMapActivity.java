@@ -29,6 +29,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -336,19 +337,15 @@ public class PassengerMapActivity extends AppCompatActivity implements OnMapRead
                                     }
                                 }).show();
                     } else {
-                        Snackbar.make(findViewById(android.R.id.content), getResources().getString(R.string.incorrect_proposal), Snackbar.LENGTH_LONG).show();
-                        source = null;
-                        destination = null;
-                        sourceMarker = null;
-                        destinationMarker = null;
-                        for (Marker m : stationMarkers) {
-                            m.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_marker));
-                            m.setAlpha(1f);
-                        }
+                        Intent intent = new Intent(PassengerMapActivity.this, TripReviewActivity.class);
+
+                        //intent.putExtra(getResources().getString(R.string.source_id), (Serializable) source.getNodeId());
+                        //intent.putExtra(getResources().getString(R.string.destination_id), (Serializable) destination.getNodeId());
+
+                        startActivity(intent);
                     }
 
                 }
-
                 return true;
             }
         });

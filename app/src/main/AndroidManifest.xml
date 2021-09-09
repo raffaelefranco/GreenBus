@@ -14,6 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CityApplication"
         android:usesCleartextTraffic="true">
+        <activity
+            android:name=".TripReviewActivity"
+            android:exported="true" />
         <activity android:name=".StartActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,7 +27,7 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".SignInActivity" />
         <activity android:name=".PassengerMapActivity" />
-        <activity android:name=".LicensePlateActivity"/>
+        <activity android:name=".LicensePlateActivity" />
         <activity android:name=".DriverMapActivity" />
 
         <meta-data

@@ -34,4 +34,7 @@
     <string name="current_location">Current location:</string>
     <string name="location_button">Finding your location…</string>
     <string name="new_route">A new route is viewed!</string>
+    <string name="cancel">Cancel</string>
+    <string name="source_id">source_id</string>
+    <string name="destination_id">destination_id</string>
 </resources>
