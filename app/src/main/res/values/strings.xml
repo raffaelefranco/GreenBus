@@ -16,6 +16,8 @@
     <string name="incorrect_proposal">Source and destination are incorrect</string>
     <string name="pick_up_point">Pick up point:</string>
     <string name="release_point">Release point:</string>
+    <string name="source">Start:</string>
+    <string name="destination">Destination:</string>
     <string name="confirm_proposal">Do you want confirm the proposal?</string>
     <string name="confirm_exit">Do you want exit?</string>
     <string name="not_registered">Not registered?</string>
@@ -37,4 +39,5 @@
     <string name="cancel">Cancel</string>
     <string name="source_id">source_id</string>
     <string name="destination_id">destination_id</string>
+    <string name="complex_trip">This trip requires one or more changes. Tap on suggestion to execute a request!</string>
 </resources>

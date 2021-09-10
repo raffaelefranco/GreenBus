@@ -138,8 +138,8 @@ public class DriverMapActivity extends AppCompatActivity implements GoogleMap.On
 
                 if (nextStationDTO.getMinPath() != null) {
 
-                    Handler mainHandler = new Handler(getMainLooper());
                     NextStationDTO finalNextStationDTO = nextStationDTO;
+                    Handler mainHandler = new Handler(getMainLooper());
                     mainHandler.post(new Runnable() {
                         @Override
                         public void run() {
